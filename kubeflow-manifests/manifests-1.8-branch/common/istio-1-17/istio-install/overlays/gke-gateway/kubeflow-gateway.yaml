@@ -1,0 +1,56 @@
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: kubeflow-gateway
+  namespace: istio-system
+spec:
+  gatewayClassName: gke-l7-global-external-managed
+  listeners:
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      options:
+        ## terraform으로 생성했던 managed SSL certification
+        networking.gke.io/pre-shared-certs: kubeflow-certificate
+
+---
+
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: kubeflow-route
+  namespace: istio-system
+  labels:
+    gateway: kubeflow-gateway
+spec:
+  parentRefs:
+  - name: kubeflow-gateway
+  hostnames:
+  - kubeflow.<<domain>> # cloud domain으로 생성한 도메인 추가
+  rules:
+  - backendRefs:
+    - name: istio-ingressgateway
+      port: 80
+
+---
+
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: istio-healthcheck
+  namespace: istio-system
+spec:
+  default:
+    logConfig:
+      enabled: true
+    config:
+      type: HTTP
+      httpHealthCheck:
+        port: 15021
+        requestPath: /healthz/ready
+  targetRef:
+    group: ""
+    kind: Service
+    name: istio-ingressgateway
