@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mlflow.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mlflow.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "mlflow.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "mlflow.selectorLabels" . | nindent 8 }}
+    spec:
+      initContainers:
+        - name: minio-create-bucket
+          image: minio/mc
+          command:
+            - "bash"
+            - "-c"
+            - >
+              mc alias set minio $MLFLOW_S3_ENDPOINT_URL $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY &&
+                mc mb --ignore-existing minio/mlflow
+          env:
+            - name: MLFLOW_S3_ENDPOINT_URL
+              value: {{ .Values.minio.endpoint }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mlflow.secretName" . }}-minio
+                  key: accesskey
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mlflow.secretName" . }}-minio
+                  key: secretkey
+      serviceAccountName: {{ include "mlflow.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          env:
+            - name: MLFLOW_S3_ENDPOINT_URL
+              value: {{ .Values.minio.endpoint }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mlflow.secretName" . }}-minio
+                  key: accesskey
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mlflow.secretName" . }}-minio
+                  key: secretkey
+            - name: BUCKET
+              value: "s3://{{ .Values.minio.bucket }}"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mlflow.secretName" . }}-mysql
+                  key: username
+            - name: DB_PW
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mlflow.secretName" . }}-mysql
+                  key: password
+            - name: DB_HOST
+            {{ if .Values.mysql.create }}
+              value:  {{ include "mlflow.fullname" . }}-mysql 
+            {{ else }} 
+              value: {{ .Values.mysql.endpoint | quote }}
+            {{ end }}
+            - name: DB_PORT
+              value: {{ .Values.mysql.port | quote }}
+            - name: DB_NAME
+              value: {{ .Values.mysql.db }}
+          command: ["mlflow", "server"]
+          args:
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - {{ .Values.mlflowPort | quote }}
+            - "--default-artifact-root"
+            - "$(BUCKET)"
+            - "--backend-store-uri"
+            - "mysql+pymysql://$(DB_USER):$(DB_PW)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.mlflowPort }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.mlflowPort }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

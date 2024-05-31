@@ -1,0 +1,77 @@
+# Default values for mlflow.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+mlflowPort: "8080"
+# cloud domain으로 생성한 도메인을 입력합니다(ex: example.com)
+dns: <<domain>>
+# 새로 생성할 인증서 이름을 입력합니다.
+certificate: mlflow-certificate
+
+image:
+  ## Artifact registry에 저장된 이미지
+  repository: <<mlflow_repository>>/mlflow
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "v2.13.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+secret:
+  annotations: {}
+  name: ""
+  minio:
+    accesskey: minio
+    secretkey: minio123
+  mysql:
+    ## terraform으로 생성한 유저와 패스워드를 입력합니다.
+    username: mlflow
+    password: mlflow
+
+minio:
+  # minio endpoint
+  endpoint: http://minio-service.kubeflow.svc.cluster.local:9000
+  # minio bucket, 없으면 자동으로 생성됩니다.
+  bucket: mlflow
+mysql:
+  create: false
+  ## <<cloud SQL private ip>>에는 terraform으로 생성한 cloudSQL의 IP를 입력합니다.
+  endpoint: "<<cloud SQL private ip>>"
+  port: "3306"
+  ## terraform으로 생성한 database 입력합니다.
+  db: mlflow
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

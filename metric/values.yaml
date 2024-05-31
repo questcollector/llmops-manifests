@@ -1,0 +1,29 @@
+prometheus:
+  server:
+    baseURL: "http://localhost:80/prometheus"
+    extraArgs:
+      web.route-prefix: "/"
+    podLabels: 
+      app: prometheus-server
+  extraScrapeConfigs: |
+    - job_name: 'dcgm_exporter'
+      static_configs:
+        - targets: ['nvidia-dcgm-exporter.gmp-public:9400']
+grafana:
+  podLabels:
+    app: grafana
+  persistence:
+    enabled: true
+  grafana.ini:
+    server:
+      root_url: 'http://localhost:3000/grafana/'
+      serve_from_sub_path: true
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://metric-prometheus-server.istio-system.svc.cluster.local
+        access: proxy
+        isDefault: true
