@@ -12,7 +12,7 @@ certificate: mlflow-certificate
 
 image:
   ## Artifact registry에 저장된 이미지
-  repository: <<mlflow_repository>>/mlflow
+  repository: miroirs/mlflow
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "v2.13.0"
@@ -39,8 +39,8 @@ minio:
   bucket: mlflow
 mysql:
   create: false
-  ## <<cloud SQL private ip>>에는 terraform으로 생성한 cloudSQL의 IP를 입력합니다.
-  endpoint: "<<cloud SQL private ip>>"
+  ## <<gcsCloudSqlPrivateIP>>에는 terraform으로 생성한 cloudSQL의 IP를 입력합니다.
+  endpoint: "<<gcsCloudSqlPrivateIP>>"
   port: "3306"
   ## terraform으로 생성한 database 입력합니다.
   db: mlflow
