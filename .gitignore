@@ -76,6 +76,3 @@ Session.vim
 **/charts/*.tgz
 
 .history
-
-*.py
-*.ipynb
