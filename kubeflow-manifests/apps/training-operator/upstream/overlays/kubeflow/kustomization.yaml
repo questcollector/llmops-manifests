@@ -7,3 +7,6 @@ resources:
 images:
   - name: kubeflow/training-operator
     newTag: "v1-855e096"
+
+patchesStrategicMerge:
+  - deployment.yaml
