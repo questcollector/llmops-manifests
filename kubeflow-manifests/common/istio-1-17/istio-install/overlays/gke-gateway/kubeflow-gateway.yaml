@@ -12,7 +12,6 @@ spec:
     tls:
       mode: Terminate
       options:
-        ## terraform으로 생성했던 managed SSL certification
         networking.gke.io/pre-shared-certs: kubeflow-certificate
 
 ---

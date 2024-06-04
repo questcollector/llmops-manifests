@@ -8,3 +8,4 @@ resources:
 # See: https://github.com/kubeflow/manifests/issues/1966
 patchesStrategicMerge:
 - patches/gateway-selectors.yaml
+- patches/config-patch.yaml
