@@ -1,7 +1,7 @@
 apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
-  name: tgi-mig-bnb
+  name: newjeans
   namespace: admin-profile
   annotations:
     sidecar.istio.io/inject: "false"
@@ -10,7 +10,7 @@ spec:
     containers:
     - args:
       - --model-id
-      - /mnt/models/newjeans-finetuning-wngs4
+      - /mnt/models/<<pytorch_job>>
       - --quantize
       - "bitsandbytes-nf4"
       image: ghcr.io/huggingface/text-generation-inference:2.0
@@ -21,11 +21,11 @@ spec:
       resources:
         limits:
           cpu: "2"
-          memory: 16Gi
+          memory: 40Gi
           nvidia.com/gpu: "1"
         requests:
           cpu: "2"
-          memory: 16Gi
+          memory: 30Gi
           nvidia.com/gpu: "1"
       volumeMounts:
       - mountPath: /dev/shm
@@ -37,45 +37,8 @@ spec:
     volumes:
     - emptyDir:
         medium: Memory
-        sizeLimit: 16Gi
+        sizeLimit: 0.5Gi
       name: shm
     - persistentVolumeClaim:
-        claimName: newjeans-finetuning-pvc-rwx
+        claimName: <<pvc_name>>
       name: model
-
----
-
-kind: Gateway
-apiVersion: gateway.networking.k8s.io/v1beta1
-metadata:
-  name: kserve-gateway
-  namespace: istio-system
-spec:
-  gatewayClassName: gke-l7-global-external-managed
-  listeners:
-  - name: https
-    protocol: HTTPS
-    port: 443
-    tls:
-      mode: Terminate
-      options:
-        networking.gke.io/pre-shared-certs: kserve-certificate
-
----
-
-kind: HTTPRoute
-apiVersion: gateway.networking.k8s.io/v1beta1
-metadata:
-  name: kserve-route
-  namespace: istio-system
-  labels:
-    gateway: kserve-gateway
-spec:
-  parentRefs:
-  - name: kserve-gateway
-  hostnames:
-  - "*.admin-profile.llmops-kiyoung01.com" # cloud domain으로 생성한 도메인 추가
-  rules:
-  - backendRefs:
-    - name: istio-ingressgateway
-      port: 80
