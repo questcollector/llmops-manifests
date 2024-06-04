@@ -8,7 +8,7 @@ mlflowPort: "8080"
 # cloud domain으로 생성한 도메인을 입력합니다(ex: example.com)
 dns: <<domain>>
 # 새로 생성할 인증서 이름을 입력합니다.
-certificate: mlflow-certificate
+certificate: kubeflow-certificate
 
 image:
   ## Artifact registry에 저장된 이미지

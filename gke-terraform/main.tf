@@ -20,6 +20,24 @@ resource "google_compute_subnetwork" "subnet" {
   }
 }
 
+##### SSL CERTIFICATE #####
+
+resource "google_compute_managed_ssl_certificate" "cert" {
+  name = "kubeflow-certificate"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  managed {
+    domains = [
+      "kubeflow.${var.domain}",
+      "mlflow.${var.domain}",
+      "newjeans.admin-profile.${var.domain}"
+    ]
+  }
+}
+
 ##### GKE CLUSTER #####
 
 resource "google_container_cluster" "gke_cluster" {
@@ -33,17 +51,17 @@ resource "google_container_cluster" "gke_cluster" {
   initial_node_count       = 1
 
   deletion_protection = false
-  
+
   gateway_api_config {
     channel = "CHANNEL_STANDARD"
   }
-  
+
   addons_config {
     gcp_filestore_csi_driver_config {
       enabled = true
     }
   }
-  
+
   ip_allocation_policy {
     services_secondary_range_name = google_compute_subnetwork.subnet.secondary_ip_range.0.range_name
     cluster_secondary_range_name  = google_compute_subnetwork.subnet.secondary_ip_range.1.range_name

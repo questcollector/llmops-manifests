@@ -6,6 +6,10 @@ variable "region" {
   type        = string
   description = "The region for provisioning resources"
 }
+variable "domain" {
+  type        = string
+  description = "domain address for kubeflow/mlflow/inferenceservice application"
+}
 variable "gke_node_count" {
   type        = number
   description = "node count by zone"

@@ -27,7 +27,8 @@ spec:
   parentRefs:
   - name: kubeflow-gateway
   hostnames:
-  - kubeflow.<<domain>> # cloud domain으로 생성한 도메인 추가
+  - kubeflow.<<domain>>
+  - "*.admin-profile.<<domain>>"
   rules:
   - backendRefs:
     - name: istio-ingressgateway
