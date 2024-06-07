@@ -22,7 +22,7 @@ resource "google_compute_subnetwork" "subnet" {
 
 ##### SSL CERTIFICATE #####
 
-resource "google_compute_managed_ssl_certificate" "cert" {
+resource "google_compute_managed_ssl_certificate" "kubeflow" {
   name = "kubeflow-certificate"
 
   lifecycle {
@@ -30,14 +30,33 @@ resource "google_compute_managed_ssl_certificate" "cert" {
   }
 
   managed {
-    domains = [
-      "kubeflow.${var.domain}",
-      "mlflow.${var.domain}",
-      "newjeans.admin-profile.${var.domain}"
-    ]
+    domains = ["kubeflow.${var.domain}"]
   }
 }
 
+resource "google_compute_managed_ssl_certificate" "mlflow" {
+  name = "mlflow-certificate"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  managed {
+    domains = ["mlflow.${var.domain}"]
+  }
+}
+
+resource "google_compute_managed_ssl_certificate" "kserve" {
+  name = "kserve-certificate"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  managed {
+    domains = ["newjeans.admin-profile.${var.domain}"]
+  }
+}
 ##### GKE CLUSTER #####
 
 resource "google_container_cluster" "gke_cluster" {
@@ -84,10 +103,6 @@ resource "google_container_node_pool" "node_pool" {
     min_node_count  = 0
     max_node_count  = var.gke_node_count * 2
     location_policy = "BALANCED"
-  }
-
-  management {
-    auto_upgrade = false
   }
 }
 

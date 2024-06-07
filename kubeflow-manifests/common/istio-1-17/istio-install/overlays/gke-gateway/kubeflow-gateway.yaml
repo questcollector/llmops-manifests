@@ -28,7 +28,6 @@ spec:
   - name: kubeflow-gateway
   hostnames:
   - kubeflow.<<domain>>
-  - "*.admin-profile.<<domain>>"
   rules:
   - backendRefs:
     - name: istio-ingressgateway
