@@ -3,19 +3,13 @@ import os
 from openai import OpenAI
 from urllib.parse import urljoin
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 INFERENCE_SERVICE = os.environ["INFERENCE_SERVICE"]
 MODLE_NAME = os.environ["MODEL_NAME"]
-AUTHSERVICE_COOKIE = os.environ["AUTHSERVICE_COOKIE"]
 client = OpenAI(
     base_url=urljoin(INFERENCE_SERVICE, "v1"), 
     api_key="-",
     default_headers={
         "Content-Type": "application/json",
-        "Cookie": f"authservice_session={AUTHSERVICE_COOKIE}"
     })
 
 def inference(message, history):
