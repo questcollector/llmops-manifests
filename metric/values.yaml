@@ -9,6 +9,26 @@ prometheus:
     - job_name: 'dcgm_exporter'
       static_configs:
         - targets: ['nvidia-dcgm-exporter.gmp-public:9400']
+    - job_name: 'knative-serving'
+      scrape_interval: 30s
+      kubernetes_sd_configs: 
+      - role: service
+      relabel_configs:
+      - action: keep
+        source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_label_app]
+        regex: knative-serving;(controller|activator|autoscaler)
+    - job_name: 'tgi'
+      scrape_interval: 3s
+      kubernetes_sd_configs:
+      - role: pod
+      relabel_configs:
+      - action: keep
+        source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_label_component, __meta_kubernetes_pod_container_name]
+        regex: (.*);predictor;kserve-container
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
 grafana:
   podLabels:
     app: grafana
