@@ -21,6 +21,8 @@ prometheus:
         target_label: namespace
       - source_labels: [__meta_kubernetes_pod_name]
         target_label: pod
+      - source_labels: [__meta_kubernetes_service_name]
+        target_label: service
     - job_name: queue-proxy
       scrape_interval: 3s
       kubernetes_sd_configs: 
@@ -33,6 +35,8 @@ prometheus:
         target_label: namespace
       - source_labels: [__meta_kubernetes_pod_name]
         target_label: pod
+      - source_labels: [__meta_kubernetes_service_name]
+        target_label: service
     - job_name: 'tgi'
       scrape_interval: 3s
       kubernetes_sd_configs:
@@ -45,6 +49,8 @@ prometheus:
         target_label: namespace
       - source_labels: [__meta_kubernetes_pod_name]
         target_label: pod
+      - source_labels: [__meta_kubernetes_service_name]
+        target_label: service
 grafana:
   podLabels:
     app: grafana
@@ -54,6 +60,11 @@ grafana:
     server:
       root_url: 'http://localhost:3000/grafana/'
       serve_from_sub_path: true
+    auth:
+      anonymous:
+        enabled: true
+    security:
+      allow_embedding: true
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -63,3 +74,49 @@ grafana:
         url: http://metric-prometheus-server.istio-system.svc.cluster.local
         access: proxy
         isDefault: true
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+      - name: 'knative-http-requests'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/knative-http-requests
+      - name: 'knative-cpu-memory-usage'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/knative-cpu-memory-usage
+      - name: 'knative-gpu-memory-usage'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/knative-gpu-memory-usage
+      - name: 'dcgm'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/dcgm
+  dashboards:
+    default:
+      knative-http-requests: 
+        file: ./dashboards/revision-http-requests.json
+      knative-cpu-memory-usage:
+        file: ./dashboards/revision-cpu-memory-usage.json
+      knative-gpu-memory-usage:
+        file: ./dashboards/revision-gpu-memory-usage.json
+      dcgm:
+        file: ./dashboards/NVIDIA DCGM Exporter.json
