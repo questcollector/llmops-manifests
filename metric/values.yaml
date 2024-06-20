@@ -5,6 +5,9 @@ prometheus:
       web.route-prefix: "/"
     podLabels: 
       app: prometheus-server
+  kube-state-metrics:
+    metricLabelsAllowlist:
+    - pods=[*]
   extraScrapeConfigs: |
     - job_name: 'dcgm_exporter'
       static_configs:
@@ -60,9 +63,6 @@ grafana:
     server:
       root_url: 'http://localhost:3000/grafana/'
       serve_from_sub_path: true
-    auth:
-      anonymous:
-        enabled: true
     security:
       allow_embedding: true
   datasources:
@@ -113,10 +113,10 @@ grafana:
   dashboards:
     default:
       knative-http-requests: 
-        file: ./dashboards/revision-http-requests.json
+        file: dashboards/revision-http-requests.json
       knative-cpu-memory-usage:
-        file: ./dashboards/revision-cpu-memory-usage.json
+        file: dashboards/revision-cpu-memory-usage.json
       knative-gpu-memory-usage:
-        file: ./dashboards/revision-gpu-memory-usage.json
+        file: dashboards/revision-gpu-memory-usage.json
       dcgm:
-        file: ./dashboards/NVIDIA DCGM Exporter.json
+        file: dashboards/NVIDIA DCGM Exporter.json
