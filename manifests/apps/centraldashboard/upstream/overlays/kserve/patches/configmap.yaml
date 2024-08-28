@@ -2,7 +2,7 @@ apiVersion: v1
 data:
   settings: |-
     {
-      "DASHBOARD_FORCE_IFRAME": true
+      "DASHBOARD_FORCE_IFRAME": false
     }
   links: |-
     {
@@ -73,7 +73,19 @@ data:
                 ],
                 "text": "Pipelines",
                 "type": "section"
-            }
+            },
+            {
+                "type": "item",
+                "link": "/mlflow/",
+                "text": "MLFlow",
+                "icon": "archive"
+            },
+            {
+                "type": "item",
+                "link": "/minio/",
+                "text": "Minio",
+                "icon": "folder-open"
+            },
         ],
         "externalLinks": [],
         "documentationItems": [
