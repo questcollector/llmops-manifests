@@ -34,18 +34,6 @@ resource "google_compute_managed_ssl_certificate" "kubeflow" {
   }
 }
 
-resource "google_compute_managed_ssl_certificate" "mlflow" {
-  name = "mlflow-certificate"
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  managed {
-    domains = ["mlflow.${var.domain}"]
-  }
-}
-
 resource "google_compute_managed_ssl_certificate" "kserve" {
   name = "kserve-certificate"
 
