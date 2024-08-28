@@ -6,11 +6,12 @@ resources:
   - ../../base/metadata/base
   - ../../base/metadata/options/istio
   - ../../third-party/argo/installs/cluster
-  - ../../third-party/mysql/base
-  - ../../third-party/mysql/options/istio
+  # - ../../third-party/mysql/base
+  # - ../../third-party/mysql/options/istio
   - ../../third-party/minio/base
   - ../../third-party/minio/options/istio
   - ../../third-party/metacontroller/base
+  - minio-vs.yaml
 
 # Identifier for application manager to apply ownerReference.
 # The ownerReference ensures the resources get garbage collected
@@ -21,3 +22,17 @@ commonLabels:
 # !!! If you want to customize the namespace,
 # please also update base/cache-deployer/cluster-scoped/cache-deployer-clusterrolebinding.yaml
 namespace: kubeflow
+
+patchesStrategicMerge:
+  - cache-server.yaml
+
+# Used by Kustomize
+configMapGenerator:
+  - name: pipeline-install-config
+    env: params.env
+    behavior: merge
+
+secretGenerator:
+  - name: mysql-secret
+    env: params-db-secret.env
+    behavior: merge

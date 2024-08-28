@@ -39,11 +39,11 @@ resources:
 # Istio
 - ../common/istio-1-22/istio-crds/base
 - ../common/istio-1-22/istio-namespace/base
-- ../common/istio-1-22/istio-install/overlays/oauth2-proxy
+- ../common/istio-1-22/istio-install/overlays/gke-gateway
 # oauth2-proxy
-- ../common/oidc-client/oauth2-proxy/overlays/m2m-self-signed
+- ../common/oidc-client/oauth2-proxy/overlays/domain
 # Dex
-- ../common/dex/overlays/oauth2-proxy
+- ../common/dex/overlays/google-oauth2-client
 # KNative
 - ../common/knative/knative-serving/overlays/gateways
 - ../common/knative/knative-eventing/base
@@ -84,6 +84,9 @@ resources:
 - ../apps/training-operator/upstream/overlays/kubeflow
 # User namespace
 - ../common/user-namespace/base
+# Model Registry
+- ../apps/model-registry/upstream/overlays/external-db
+- ../apps/model-registry/upstream/options/istio
 
 # KServe
 - ../contrib/kserve/kserve
