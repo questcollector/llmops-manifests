@@ -38,6 +38,12 @@ data:
                 "icon": "kubeflow:models"
             },
             {
+                "type": "item",
+                "link": "/mlflow/",
+                "text": "MLFlow",
+                "icon": "archive"
+            },
+            {
                 "icon": "kubeflow:pipeline-centered",
                 "items": [
                     {
@@ -73,18 +79,6 @@ data:
                 ],
                 "text": "Pipelines",
                 "type": "section"
-            },
-            {
-                "type": "item",
-                "link": "/mlflow/",
-                "text": "MLFlow",
-                "icon": "archive"
-            },
-            {
-                "type": "item",
-                "link": "/minio/",
-                "text": "Minio",
-                "icon": "folder-open"
             },
         ],
         "externalLinks": [],
