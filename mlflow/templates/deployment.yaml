@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         {{- include "mlflow.selectorLabels" . | nindent 8 }}
+      annotations:
+        sidecar.istio.io/inject: "true"
     spec:
       initContainers:
         - name: minio-create-bucket
