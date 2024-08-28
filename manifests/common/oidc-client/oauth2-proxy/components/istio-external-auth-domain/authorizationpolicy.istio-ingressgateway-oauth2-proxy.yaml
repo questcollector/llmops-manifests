@@ -13,5 +13,6 @@ spec:
   rules:
   - to:
     - operation:
-        notHosts:
-        - "*.admin-profile.<<domain>>"
+        hosts:
+        - "kubeflow.<<domain>>"
+        - "kubeflow.<<domain>>:*"

@@ -15,5 +15,3 @@ spec:
       outputClaimToHeaders:
         - header: kubeflow-userid
           claim: email
-        - header: kubeflow-groups
-          claim: groups

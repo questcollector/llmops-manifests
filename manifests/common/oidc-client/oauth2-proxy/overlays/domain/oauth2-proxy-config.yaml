@@ -9,7 +9,7 @@ data:
   oauth2_proxy.cfg: |
     provider = "oidc"
     oidc_issuer_url = "https://kubeflow.<<domain>>/dex"
-    scope = "profile email groups openid"
+    scope = "profile email openid"
     upstreams = "static://200"
     email_domains = [ "*" ]
     skip_auth_regex=["/dex/.*"]
