@@ -10,8 +10,8 @@ spec:
       {{- include "mlflow.selectorLabels" . | nindent 4 }}
   rules:
     - from:
-        - source:
-            principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
-      - from:
-        - source:
-            principals: ["cluster.local/ns/admin-profile/sa/default-editor"]
+      - source:
+          principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+    - from:
+      - source:
+          principals: ["cluster.local/ns/admin-profile/sa/default-editor"]
