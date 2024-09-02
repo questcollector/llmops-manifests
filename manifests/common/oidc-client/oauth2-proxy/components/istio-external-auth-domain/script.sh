@@ -49,24 +49,20 @@ get_jwks_uri() {
   issuer_url="${1}"
   curl -s --request GET \
       --url "${issuer_url}/.well-known/openid-configuration" \
-      --header "Authorization: Bearer $(cat /run/secrets/kubernetes.io/serviceaccount/token)" \
-      --insecure |
-      grep -o '"jwks_uri":"https:\/\/[^"]\+"' |
-      sed 's/"jwks_uri":"\(.*\)"/\1/'
+      --insecure | grep -o '"jwks_uri": "https:\/\/.*"' | sed 's/"jwks_uri": "\(.*\)"/\1/'
   }
 
 get_jwks_from_uri() {
   jwks_uri="${1}"
   curl -s --request GET \
       --url "${jwks_uri}" \
-      --header "Authorization: Bearer $(cat /run/secrets/kubernetes.io/serviceaccount/token)" \
       --insecure
 }
 
 # Format JWKS in a way that can be accepted in resource patch.
 parse_escaped_jwks() {
   jwks="${1}"
-  echo "${jwks}" | sed 's/"/\\"/g'
+  echo "${jwks}" | sed 's/"/\\"/g' | tr -d \\n | tr -d ' '
 }
 
 are_jwks_equal() {
