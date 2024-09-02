@@ -4,8 +4,23 @@ kind: Component
 resources:
 - authorizationpolicy.istio-ingressgateway-oauth2-proxy.yaml
 - requestauthentication.dex-jwt.yaml
+- cronjob.kubeflow-dex-oidc-configurator.yaml
+- rbac.yaml
 
 # If you're running Kubeflow behind CloudFlare, use 
 # authorizationpolicy.istio-ingressgateway-oauth2-proxy-cloudflare.yaml
 # instead of 
 # authorizationpolicy.istio-ingressgateway-oauth2-proxy.yaml
+
+configMapGenerator:
+- name: kubeflow-dex-oidc-configurator-script
+  namespace: istio-system
+  files:
+  - script.sh=script.sh
+
+- name: kubeflow-dex-oidc-configurator-envs
+  namespace: istio-system
+  literals:
+  - ISTIO_ROOT_NAMESPACE=istio-system
+  - REQUEST_AUTHENTICATION_NAME=dex-jwt
+  - KUBERNETES_API_SERVER_URL=https://kubernetes.default.svc
