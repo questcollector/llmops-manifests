@@ -4,7 +4,7 @@ metadata:
   name: dex
 data:
   config.yaml: |
-    issuer: https://kubeflow.<<domain>>/dex # cloud domain으로 생성한 도메인 추가(ex: example.com)
+    issuer: https://kubeflow.<<domain>>/dex
     storage:
       type: kubernetes
       config:
@@ -28,6 +28,6 @@ data:
     staticClients:
     # https://github.com/dexidp/dex/pull/1664
     - idEnv: OIDC_CLIENT_ID
-      redirectURIs: ["/authservice/oidc/callback"]
+      redirectURIs: ["/oauth2/callback"]
       name: 'Dex Login Application'
       secretEnv: OIDC_CLIENT_SECRET

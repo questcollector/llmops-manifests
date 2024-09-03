@@ -5,9 +5,10 @@ resources:
 - ../istio
 
 patches:
-- path: config-map.yaml
-  target:
-    version: v1
-    kind: ConfigMap
-    name: dex
-    namespace: auth
+  - path: config-map.yaml
+    target:
+      version: v1
+      kind: ConfigMap
+      name: dex
+      namespace: auth
+
