@@ -1,0 +1,59 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: luckyvicky-vllm
+  namespace: pjt-test
+spec:
+  predictor:
+    containers:
+      - args:
+          - '--model'
+          - /mnt/models/Meta-Llama-3.1-8B-Instruct
+          - '--dtype'
+          - bfloat16
+          - '--max-model-len'
+          - "4096"
+          - '--kv-cache-dtype'
+          - fp8
+          - '--quantization'
+          - bitsandbytes
+          - '--load-format'
+          - bitsandbytes
+          - '--enable-lora'
+          - '--lora-modules'
+          - 'newjeans=/mnt/models/dpo-test'
+          - '--tensor-parallel-size'
+          - "1"
+          - '--block-size'
+          - "16"
+          - '--gpu-memory-utilization'
+          - "0.25"
+        env:
+          - name: STORAGE_URI
+            value: 'pvc://workspace-dpo-train/model'
+        image: 'mlopsscr-mjzpikav.scr.kr-west.scp-in.com/vllm/vllm-openai:v0.5.5-bitsandbytes'
+        name: kserve-container
+        ports:
+          - containerPort: 8000
+            protocol: TCP
+        resources:
+          limits:
+            cpu: '16'
+            memory: 128Gi
+            nvidia.com/gpu: '1'
+          requests:
+            cpu: '1'
+            memory: 32Gi
+            nvidia.com/gpu: '1'
+        volumeMounts:
+          - mountPath: /dev/shm
+            name: shm
+    imagePullSecrets:
+      - name: dockerimage-pjt-test-26dd22ef8bc8d54d97dc000e36464449
+    maxReplicas: 1
+    minReplicas: 1
+    volumes:
+      - emptyDir:
+          medium: Memory
+          sizeLimit: 32Gi
+        name: shm
