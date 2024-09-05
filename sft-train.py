@@ -8,10 +8,11 @@ from trl import (
     SFTTrainer,
     SFTConfig
 )
-from datasets import load_from_disk
+from datasets import load_dataset
 from peft import LoraConfig, TaskType
 import torch
 import torch.distributed as dist
+import mlflow
 import evaluate
 import numpy as np
 
@@ -29,8 +30,12 @@ logging.set_verbosity_debug()
 ## TraingArguments
 @dataclass
 class ScriptArguments:
-    model_path: Optional[str] = field(default="meta-llama/Llama-2-7b-hf", metadata={"help": "the model path"})
-    dataset_path: Optional[str] = field(default="lvwerra/stack-exchange-paired", metadata={"help": "the dataset path"})
+    model_path: Optional[str] = field(default="unsloth/Meta-Llama-3.1-8B-Instruct", metadata={"help": "the model path"})
+    train_dataset_path: Optional[str] = field(default="Junnos/luckyvicky-DPO", metadata={"help": "the train dataset path"})
+    eval_dataset_path: Optional[str] = field(default="Junnos/luckyvicky-DPO", metadata={"help": "the eval dataset path"})
+    training_job_name: Optional[str] = field(default="sft-train", metadata={"help": "training job name"})
+    training_job_id: Optional[str] = field(default="abcde", metadata={"help": "training job id"})
+    system_prompt: Optional[str] = field(default="system prompt", metadata={"help": "system prompt"})
 
     # LoraConfig
     lora_alpha: Optional[float] = field(default=16, metadata={"help": "the lora alpha parameter"})
@@ -49,22 +54,17 @@ peft_config = LoraConfig(
     use_rslora=True,
 )
 
-# metric
-metric = evaluate.load('accuracy', module_type="metric")
-def compute_metrics(eval_pred):
-    predictions, labels = eval_pred
-    predictions = np.argmax(predictions, axis=1)
-    acc = metric.compute(predictions=predictions, references=labels)
-    return {{'accuracy': acc}}
+metric = evaluate.load("accuracy")
+def compute_metrics(eval_preds):
+    logits, labels = eval_preds
+    predictions = np.argmax(logits, axis=-1)
+    for pred, refs in zip(predictions, labels):
+        metric.add_batch(predictions=pred, references=refs)
+    return metric.compute()
 
-## load dataset, tokenizer, model
-def prepare_sample_text(example):
-    """Prepare the text from a sample of the dataset."""
-    text = f"### SYSTEM: {example['system']}\n\n### QUESTION: {example['question']}\n\n### ANSWER: {example['chosen']}"
-    return text
-
-dataset = load_from_disk(script_args.dataset_path)
-train_data, valid_data = (dataset['train'], dataset['test'])
+train_dataset = load_dataset("json", data_files=script_args.train_dataset_path)['train']
+if script_args.eval_dataset_path is not None:
+    eval_dataset = load_dataset("json", data_files=script_args.eval_dataset_path)['train']
 
 tokenizer = AutoTokenizer.from_pretrained(script_args.model_path, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
@@ -83,13 +83,38 @@ trainer = SFTTrainer(
     args=training_args,
     model=model,
     tokenizer=tokenizer,
-    train_dataset=train_data,
-    eval_dataset=valid_data,
+    train_dataset=train_dataset,
+    eval_dataset=eval_dataset if script_args.eval_dataset_path is not None else None,
     peft_config=peft_config,
-    formatting_func=prepare_sample_text,
     compute_metrics=compute_metrics,
 )
+
+## mlflow
+os.environ["MLFLOW_EXPERIMENT_NAME"] = script_args.training_job_name
+os.environ["MLFLOW_FLATTEN_PARAMS"] = "1"
+os.environ["MLFLOW_TRACKING_URI"]="http://mlflow.mlflow"
+os.environ["MLFLOW_S3_ENDPOINT_URL"]="http://minio-service.kubeflow:9000"
+os.environ["MLFLOW_S3_IGNORE_TLS"]="true"
+
+# create mlflow run in master
+if dist.get_rank() == 0:
+    mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
+    mlflow.set_experiment(os.environ["MLFLOW_EXPERIMENT_NAME"])
+    mlflow.start_run(run_name=script_args.training_job_id)
+    mlflow.log_param("system_prompt", script_args.system_prompt)
 
 trainer.model.print_trainable_parameters()
 trainer.train()
 trainer.save_model()
+
+## mlflow log model and end run
+if dist.get_rank() == 0:
+    mlflow.transformers.log_model(
+        transformers_model={
+            "model": trainer.model,
+            "tokenizer": tokenizer,
+        },
+        artifact_path="model",
+        task="text-generation"
+    )
+    mlflow.end_run()
