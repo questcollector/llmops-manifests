@@ -41,15 +41,6 @@ class ScriptArguments:
 parser = HfArgumentParser((ScriptArguments, DPOConfig))
 script_args, training_args = parser.parse_args_into_dataclasses()
 
-## peft
-peft_config = LoraConfig(
-    task_type=TaskType.CAUSAL_LM,
-    r=script_args.lora_r,
-    lora_alpha=script_args.lora_alpha,
-    lora_dropout=script_args.lora_dropout,
-    use_rslora=True,
-)
-
 ## load dataset, tokenizer, model
 tokenizer = AutoTokenizer.from_pretrained(script_args.model_path, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
