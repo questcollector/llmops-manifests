@@ -57,7 +57,6 @@ rules:
   - conditions
   - runs
   - tasks
-  - customruns
   verbs:
   - create
   - get
