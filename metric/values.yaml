@@ -40,7 +40,7 @@ prometheus:
         target_label: pod
       - source_labels: [__meta_kubernetes_service_name]
         target_label: service
-    - job_name: 'tgi'
+    - job_name: 'vllm'
       scrape_interval: 3s
       kubernetes_sd_configs:
       - role: pod
