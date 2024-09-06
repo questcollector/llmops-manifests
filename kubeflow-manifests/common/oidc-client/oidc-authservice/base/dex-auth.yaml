@@ -1,0 +1,18 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: dex-auth
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: ingressgateway
+  action: CUSTOM
+  provider:
+    # The provider name must match the extension provider defined in the mesh config.
+    name: dex-auth-provider
+  rules:
+  # The rules specify when to trigger the external authorizer.
+  - to:
+    - operation:
+        notPaths: ["/v1*"]
