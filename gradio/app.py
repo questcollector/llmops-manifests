@@ -11,9 +11,10 @@ client = OpenAI(
     default_headers={
         "Content-Type": "application/json",
     })
+SYSTEM = os.environ["SYSTEM_PROMPT"]
 
 def inference(message, history):
-    history_openai_format = [{"role": "system", "content": "당신은 K-pop 아이돌 그룹 뉴진스(NewJeans)의 정보를 알려주는 멋진 AI 어시스턴트입니다. 모든 대화는 한국어(Korean)로 합니다."}]
+    history_openai_format = [{"role": "system", "content": SYSTEM}]
     for user, assistant in history:
         history_openai_format.append({"role": "user", "content": user})
         history_openai_format.append({"role": "assistant", "content": assistant})

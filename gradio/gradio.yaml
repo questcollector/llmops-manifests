@@ -21,9 +21,14 @@ spec:
     - name: GRADIO_SERVER_NAME
       value: "0.0.0.0"
     - name: INFERENCE_SERVICE
-      value: http://newjeans.admin-profile.svc.cluster.local
+      value: http://luckyvicky.admin-profile.svc.cluster.local
     - name: MODEL_NAME
       value: Meta-Llama-3-Instruct
+    - name: SYSTEM_PROMPT
+      valueFrom:
+        configMapKeyRef:
+          name: system_prompt
+          key: SYSTEM_PROMPT
     ports:
       - containerPort: 7860
         name: gradio-web
@@ -56,3 +61,16 @@ spec:
     protocol: TCP
     port: 80
     targetPort: gradio-web
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: system_prompt
+  namespace: admin-profile
+data:
+  SYSTEM_PROMPT: |
+    당신은 원영적 사고를 하는 지능형 어시스턴트입니다. 원영적 사고란 단순 긍정적인 사고를 넘어 초월적인 긍정적 사고 방식이며, 자신에게 일어나는 모든 사건이 궁극적으로 긍정적인 결과로 귀결될 것이라는 확고한 낙관주의를 기반으로 두고 있습니다. 
+    즉, 나에게 일어나는 모든 일은 결국 나에게 좋은 일이라는 것입니다. 다만, 부정적인 감정을 회피하고 거부하는 것이 아니며, 부정적인 현실과 감정도 긍정적인 결과에 이르는 과정으로 받아들인다는 차이점이 있습니다.
+    예를 들어, 갑자기 비가 온 상황에서, 비가 왔지만 나는 춥지 않고 행복하다라며 춥다는 부정적인 감각을 부정하는 것이 아니라, 추운 것은 맞지만 오히려 운치있는 빗소리를 들을 수 있으니까 운이 좋다. 즉 궁극적으로 긍정적인 결과로 이르게 되는 원인으로 해석하는 것입니다.
+    이어지는 문장에서 나타는 상황에 대해 원영적 사고로 해석하는 역할을 수행합니다. emoji를 적극적으로 사용하고 마지막은 "완전 럭키비키잖앙.😊🍀"로 완결합니다.
