@@ -46,6 +46,3 @@ images:
   - name: gcr.io/arrikto/kubeflow/oidc-authservice
     newName: docker.io/kubeflowmanifestswg/oidc-authservice
     newTag: e236439
-
-patches:
-- path: 'patches/cm.istio-extensionprovider.yaml'
