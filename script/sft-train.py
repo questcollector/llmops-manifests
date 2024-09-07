@@ -18,7 +18,6 @@ import evaluate
 import numpy as np
 import boto3
 from urllib.parse import urlparse
-import tarfile
 
 from dataclasses import dataclass, field
 from typing import Optional
@@ -111,16 +110,11 @@ def download_object_and_convert_to_dataset(minio_client, url):
     # download minio object
     temp_dir = os.path.dirname(__file__)
     temp_file = os.path.basename(key)
-    tar_file = os.path.join(temp_dir, temp_file)
-    minio_client.download_file(bucket, key, tar_file)
+    file_path = os.path.join(temp_dir, temp_file)
+    minio_client.download_file(bucket, key, file_path)
 
-    # extract tar file
-    with tarfile.open(tar_file) as tar:
-        stem = os.path.splitext(temp_file)[0]
-        extract_dir = os.path.join(temp_dir, stem)
-        tar.extractall(extract_dir)
     # load dataset from jsonl format data file
-    dataset = load_dataset("json", data_files=os.path.join(extract_dir, "data"))
+    dataset = load_dataset("json", data_files=file_path)
     return dataset['train']
 
 print(f"train dataset uri: {script_args.train_dataset_uri}")
