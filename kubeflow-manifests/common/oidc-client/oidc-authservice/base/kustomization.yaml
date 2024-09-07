@@ -5,8 +5,9 @@ resources:
   - rbac.yaml
   - service.yaml
   - statefulset.yaml
-  - envoy-filter.yaml
+  # - envoy-filter.yaml
   - pvc.yaml
+  - dex-auth.yaml
 
 namespace: istio-system
 

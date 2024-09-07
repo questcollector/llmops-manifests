@@ -6,3 +6,6 @@ namespace: istio-system
 resources:
 - ../../base
 - kubeflow-gateway.yaml
+
+patches:
+- path: 'patches/cm.istio-extensionprovider.yaml'

@@ -1,0 +1,874 @@
+# PIPELINE DEFINITION
+# Name: luckyvicky-finetuning
+# Description: finetuning with huggingface TRL SFTTrainer
+# Inputs:
+#    base_image: str [Default: 'asia-northeast3-docker.pkg.dev/silver-bridge-433413-f3/llmops/transformers-pytorch-deepspeed-latest-gpu:deepspeed-v0.15.0-24.06.py3']
+#    batch_size: int [Default: 4.0]
+#    deepspeed_config_extras: str [Default: '{}']
+#    deepspeed_config_url: str [Default: 'https://github.com/questcollector/llmops-manifests/raw/second/script/deepspeed.json']
+#    eval_data_url: str [Default: 'https://drive.google.com/uc?id=1loRPD53t6K0kdMRa6lv7qRO5rzDLanRR']
+#    job_name: str [Default: 'luckyvicky']
+#    master_replica: int [Default: 1.0]
+#    master_resources: str [Default: '{"cpu":"2", "memory": "55Gi", "nvidia.com/gpu": "1"}']
+#    model_id: str [Default: 'unsloth/Meta-Llama-3.1-8B-Instruct']
+#    num_train_epochs: int [Default: 10.0]
+#    train_data_url: str [Default: 'https://drive.google.com/uc?id=1YHU91AS53lIqoSF8NUXxZV-Rnd2vHH_6']
+#    training_code_url: str [Default: 'https://github.com/questcollector/llmops-manifests/raw/second/script/sft-train.py']
+#    worker_replica: int [Default: 1.0]
+#    worker_resources: str [Default: '{"cpu":"2", "memory": "20Gi", "nvidia.com/gpu": "1"}']
+components:
+  comp-createpvc:
+    executorLabel: exec-createpvc
+    inputDefinitions:
+      parameters:
+        access_modes:
+          description: 'AccessModes to request for the provisioned PVC. May
+
+            be one or more of ``''ReadWriteOnce''``, ``''ReadOnlyMany''``, ``''ReadWriteMany''``,
+            or
+
+            ``''ReadWriteOncePod''``. Corresponds to `PersistentVolumeClaim.spec.accessModes
+            <https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes>`_.'
+          parameterType: LIST
+        annotations:
+          description: Annotations for the PVC's metadata. Corresponds to `PersistentVolumeClaim.metadata.annotations
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaim>`_.
+          isOptional: true
+          parameterType: STRUCT
+        pvc_name:
+          description: 'Name of the PVC. Corresponds to `PersistentVolumeClaim.metadata.name
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaim>`_.
+            Only one of ``pvc_name`` and ``pvc_name_suffix`` can
+
+            be provided.'
+          isOptional: true
+          parameterType: STRING
+        pvc_name_suffix:
+          description: 'Prefix to use for a dynamically generated name, which
+
+            will take the form ``<argo-workflow-name>-<pvc_name_suffix>``. Only one
+
+            of ``pvc_name`` and ``pvc_name_suffix`` can be provided.'
+          isOptional: true
+          parameterType: STRING
+        size:
+          description: The size of storage requested by the PVC that will be provisioned.
+            For example, ``'5Gi'``. Corresponds to `PersistentVolumeClaim.spec.resources.requests.storage
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaimSpec>`_.
+          parameterType: STRING
+        storage_class_name:
+          defaultValue: ''
+          description: 'Name of StorageClass from which to provision the PV
+
+            to back the PVC. ``None`` indicates to use the cluster''s default
+
+            storage_class_name. Set to ``''''`` for a statically specified PVC.'
+          isOptional: true
+          parameterType: STRING
+        volume_name:
+          description: 'Pre-existing PersistentVolume that should back the
+
+            provisioned PersistentVolumeClaim. Used for statically
+
+            specified PV only. Corresponds to `PersistentVolumeClaim.spec.volumeName
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaimSpec>`_.'
+          isOptional: true
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        name:
+          parameterType: STRING
+  comp-generate-pytorchjob-script:
+    executorLabel: exec-generate-pytorchjob-script
+    inputDefinitions:
+      artifacts:
+        eval_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        train_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        batch_size:
+          parameterType: NUMBER_INTEGER
+        deepspeed_config:
+          parameterType: STRUCT
+        job_name:
+          parameterType: STRING
+        model_id:
+          parameterType: STRING
+        mount_path:
+          parameterType: STRING
+        num_train_epochs:
+          parameterType: NUMBER_INTEGER
+        training_code:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        exec_script:
+          parameterType: STRING
+        job_id:
+          parameterType: STRING
+  comp-json-to-dict:
+    executorLabel: exec-json-to-dict
+    inputDefinitions:
+      parameters:
+        extras_to_update:
+          parameterType: STRING
+        json_url:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRUCT
+  comp-run-pytorchjob:
+    executorLabel: exec-run-pytorchjob
+    inputDefinitions:
+      parameters:
+        base_image:
+          parameterType: STRING
+        exec_script:
+          parameterType: STRING
+        job_id:
+          parameterType: STRING
+        job_name:
+          parameterType: STRING
+        master_replica:
+          parameterType: NUMBER_INTEGER
+        master_resources:
+          parameterType: STRING
+        mount_path:
+          parameterType: STRING
+        pvc_name:
+          parameterType: STRING
+        worker_replica:
+          parameterType: NUMBER_INTEGER
+        worker_resources:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-save-jsonl:
+    executorLabel: exec-save-jsonl
+    inputDefinitions:
+      parameters:
+        jsonl_url:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        output_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-save-jsonl-2:
+    executorLabel: exec-save-jsonl-2
+    inputDefinitions:
+      parameters:
+        jsonl_url:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        output_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-save-train-func:
+    executorLabel: exec-save-train-func
+    inputDefinitions:
+      parameters:
+        training_code_url:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-validate-dataset:
+    executorLabel: exec-validate-dataset
+    inputDefinitions:
+      artifacts:
+        jsonl_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        valid_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-validate-dataset-2:
+    executorLabel: exec-validate-dataset-2
+    inputDefinitions:
+      artifacts:
+        jsonl_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        valid_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+deploymentSpec:
+  executors:
+    exec-createpvc:
+      container:
+        image: argostub/createpvc
+    exec-generate-pytorchjob-script:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - generate_pytorchjob_script
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.8.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef generate_pytorchjob_script(\n    job_name:str,\n    training_code:str,\n\
+          \    deepspeed_config:dict,\n    model_id:str,\n    train_dataset:Input[Dataset],\n\
+          \    eval_dataset:Input[Dataset],\n    mount_path:str,\n    batch_size:int,\n\
+          \    num_train_epochs:int,\n) -> NamedTuple('outputs', job_id=str, exec_script=str):\n\
+          \    import os\n    import json\n    import string\n    import random\n\n\
+          \    ## create job id\n    letters_set = string.ascii_lowercase + string.digits\n\
+          \    random_list = random.sample(letters_set,5)\n    job_id = ''.join(random_list)\n\
+          \n    train_dataset_uri = train_dataset.uri\n    eval_dataset_uri = eval_dataset.uri\n\
+          \n    deepspeed_config[\"tensorboard\"][\"output_path\"] = os.path.join(mount_path,\
+          \ f\"{job_name}-{job_id}/logs\")\n\n    exec_script = f\"\"\"\nprogram_path=$(mktemp\
+          \ -d)\nread -r -d '' SCRIPT << EOM\\n\n{training_code}\nEOM\nprintf \"%s\"\
+          \ \"$SCRIPT\" > $program_path/ephemeral_script.py\nread -r -d '' SCRIPT\
+          \ << EOM\\n\n{json.dumps(deepspeed_config)}\nEOM\nprintf \"%s\" \"$SCRIPT\"\
+          \ > $program_path/deepspeed.json\ntorchrun --nnodes $WORLD_SIZE --nproc_per_node\
+          \ <<gpu_cnt>> --master-addr $MASTER_ADDR \\\n--master-port $MASTER_PORT\
+          \ --node-rank $RANK $program_path/ephemeral_script.py \\\n--model_path {model_id}\
+          \ --train_dataset_uri {train_dataset_uri} --eval_dataset_uri {eval_dataset_uri}\
+          \ \\\n--training_job_name {job_name} --training_job_id {job_id} --mount_path\
+          \ {mount_path} \\\n--per_device_train_batch_size {batch_size} --per_device_eval_batch_size\
+          \ {batch_size} \\\n--num_train_epochs {num_train_epochs} --deepspeed $program_path/deepspeed.json\
+          \ \\\n\"\"\"\n    print(f\"pytorchjob script:\\n\\n{exec_script}\")\n  \
+          \  print(f\"pytorchjob job_id: {job_id}\")\n    outputs = NamedTuple('outputs',\
+          \ job_id=str, exec_script=str)\n    return outputs(job_id, exec_script)\n\
+          \n"
+        image: python:3.11
+    exec-json-to-dict:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - json_to_dict
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.8.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'requests' &&\
+          \ \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef json_to_dict(\n    json_url:str,\n    extras_to_update:str,\n\
+          ) -> dict:\n    import requests\n    import json\n\n    headers = {\"Content-type\"\
+          : \"application/json\"}\n    response = requests.get(json_url, headers=headers)\n\
+          \    json_data = response.json()\n\n    # add extras\n    def recursive_update(original,\
+          \ updates):\n        for key, value in updates.items():\n            # \uB458\
+          \uB2E4 dictionary\uBA74 \uC7AC\uADC0\uC801\uC73C\uB85C \uBCD1\uD569\n  \
+          \          if isinstance(value, dict) and key in original and isinstance(original[key],\
+          \ dict):\n                recursive_update(original[key], value)\n     \
+          \       # \uC5C5\uB370\uC774\uD2B8\n            else:\n                original[key]\
+          \ = value\n    if extras_to_update:\n        extras_to_update = json.loads(extras_to_update)\n\
+          \n    recursive_update(json_data, extras_to_update)\n\n    print(f\"json\
+          \ data:\\n\\n{json.dumps(json_data, indent=4)}\")\n\n    return json_data\n\
+          \n"
+        image: python:3.11
+    exec-run-pytorchjob:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - run_pytorchjob
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.8.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'kubeflow-training'\
+          \ && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef run_pytorchjob(\n    job_name:str,\n    job_id:str,\n    base_image:str,\n\
+          \    pvc_name:str,\n    mount_path:str,\n    exec_script:str,\n    master_replica:int,\n\
+          \    master_resources:str,\n    worker_replica:int,\n    worker_resources:str,\n\
+          ) -> str:\n    import json\n    from kubernetes import client\n    from\
+          \ kubeflow.training.constants import constants\n    from kubeflow.training\
+          \ import models\n\n    # parse node resources\n    master_resources = json.loads(master_resources)\n\
+          \    worker_resources = json.loads(worker_resources)\n\n    print(f\"master\
+          \ node resources:\\n{json.dumps(master_resources, indent=4)}\")\n    print(f\"\
+          worker node resources:\\n{json.dumps(worker_resources, indent=4)}\")\n\n\
+          \    # populate nproc_per_node argument\n    master_exec_script = exec_script.replace(\"\
+          <<gpu_cnt>>\", master_resources[\"nvidia.com/gpu\"])\n    worker_exec_script\
+          \ = exec_script.replace(\"<<gpu_cnt>>\", worker_resources[\"nvidia.com/gpu\"\
+          ])\n\n    ## declare training pod spec    \n    pod_template_spec = client.V1PodTemplateSpec(\n\
+          \        metadata=client.V1ObjectMeta(annotations={constants.ISTIO_SIDECAR_INJECTION:\
+          \ \"false\"}), ## istio sidecar disable\n        spec=client.V1PodSpec(\n\
+          \            restart_policy=\"Never\",\n            containers=[\n     \
+          \           client.V1Container(\n                    name=constants.PYTORCHJOB_CONTAINER,\n\
+          \                    image=base_image,\n                    command=[\"\
+          bash\", \"-c\"],\n                    args=[master_exec_script],\n     \
+          \               resources=client.V1ResourceRequirements(\n             \
+          \           limits=master_resources,\n                        requests=master_resources\n\
+          \                    ),\n                    env=[ ## for mlflow artifact\
+          \ store\n                        client.V1EnvVar(\n                    \
+          \        name=\"AWS_ACCESS_KEY_ID\",\n                            value_from=client.V1EnvVarSource(\n\
+          \                                secret_key_ref=client.V1SecretKeySelector(\n\
+          \                                    name=\"mlpipeline-minio-artifact\"\
+          ,\n                                    key=\"accesskey\",\n            \
+          \                    )\n                            )\n                \
+          \        ),\n                        client.V1EnvVar(\n                \
+          \            name=\"AWS_SECRET_ACCESS_KEY\",\n                         \
+          \   value_from=client.V1EnvVarSource(\n                                secret_key_ref=client.V1SecretKeySelector(\n\
+          \                                    name=\"mlpipeline-minio-artifact\"\
+          ,\n                                    key=\"secretkey\",\n            \
+          \                    )\n                            )\n                \
+          \        ),\n                    ],\n                    volume_mounts=[\n\
+          \                        client.V1VolumeMount(\n                       \
+          \     mount_path=mount_path,\n                            name=pvc_name,\n\
+          \                            read_only=False,\n\n                      \
+          \  ),\n                        client.V1VolumeMount(\n                 \
+          \           mount_path=\"/dev/shm\",\n                            name=\"\
+          dshm\",\n                            read_only=False,\n                \
+          \        ),\n                    ]\n                )\n            ],\n\
+          \            volumes=[\n                client.V1Volume(\n             \
+          \       name=pvc_name,\n                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(\n\
+          \                        claim_name=pvc_name,\n                        read_only=False,\n\
+          \                    )\n                ),\n                client.V1Volume(\n\
+          \                    name=\"dshm\",\n                    empty_dir=client.V1EmptyDirVolumeSource(\n\
+          \                        medium=\"Memory\",\n                        size_limit=\"\
+          1.0Gi\"\n                    )\n                )\n            ]\n     \
+          \   )        \n    )\n\n    ## get namespace\n    with open(\"/var/run/secrets/kubernetes.io/serviceaccount/namespace\"\
+          , \"r\") as f:\n        namespace = f.read()\n\n    ## declare pytorchjob\
+          \    \n    pytorchjob_name = f\"{job_name}-{job_id}\"\n    pytorchjob =\
+          \ models.KubeflowOrgV1PyTorchJob(\n        api_version=constants.API_VERSION,\n\
+          \        kind=constants.PYTORCHJOB_KIND,\n        metadata=client.V1ObjectMeta(name=pytorchjob_name,\
+          \ namespace=namespace),\n        spec=models.KubeflowOrgV1PyTorchJobSpec(\n\
+          \            run_policy=models.KubeflowOrgV1RunPolicy(clean_pod_policy=None),\n\
+          \            pytorch_replica_specs={}\n        )\n    )\n    pytorchjob.spec.pytorch_replica_specs[constants.REPLICA_TYPE_MASTER]\
+          \ = models.KubeflowOrgV1ReplicaSpec(replicas=master_replica, template=pod_template_spec)\n\
+          \n    import copy\n    worker_pod_template_spec = copy.deepcopy(pod_template_spec)\n\
+          \    worker_pod_template_spec.spec.containers[0].args = [worker_exec_script]\n\
+          \    worker_pod_template_spec.spec.containers[0].resources = client.V1ResourceRequirements(\n\
+          \        limits=worker_resources,\n        requests=worker_resources,\n\
+          \    )\n    pytorchjob.spec.pytorch_replica_specs[constants.REPLICA_TYPE_WORKER]\
+          \ = models.KubeflowOrgV1ReplicaSpec(replicas=worker_replica, template=worker_pod_template_spec)\n\
+          \n\n    ## create pytorchjob\n    from kubeflow.training import TrainingClient\n\
+          \    training_client = TrainingClient()\n    training_client.create_job(pytorchjob,\
+          \ namespace=namespace)\n\n    ## wait till Running state\n    running_pytorchjob\
+          \ = training_client.wait_for_job_conditions(\n        name=pytorchjob.metadata.name,\n\
+          \        namespace=pytorchjob.metadata.namespace,\n        job_kind=constants.PYTORCHJOB_KIND,\n\
+          \        expected_conditions={constants.JOB_CONDITION_RUNNING}\n    )\n\n\
+          \    ## log master pod\n    training_client.get_job_logs(\n        name=running_pytorchjob.metadata.name,\n\
+          \        namespace= running_pytorchjob.metadata.namespace,\n        job_kind=constants.PYTORCHJOB_KIND,\n\
+          \        is_master=True,\n        follow=True\n    )\n\n    ## check job\
+          \ is succeeded\n    training_client.wait_for_job_conditions(\n        name=running_pytorchjob.metadata.name,\n\
+          \        namespace=running_pytorchjob.metadata.namespace,\n        job_kind=constants.PYTORCHJOB_KIND,\n\
+          \        expected_conditions={constants.JOB_CONDITION_SUCCEEDED}\n    )\n\
+          \    return pytorchjob_name\n\n"
+        image: python:3.11
+    exec-save-jsonl:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - save_jsonl
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.8.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'datasets' &&\
+          \ \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef save_jsonl(\n    jsonl_url: str,\n    output_dataset: Output[Dataset]\n\
+          ):\n    import requests\n    from datasets import load_dataset\n\n    jsonl_file\
+          \ = \"temp.jsonl\"\n    # fetch jsonl file and save temp file\n    with\
+          \ requests.get(jsonl_url, stream=True) as r:\n        r.raise_for_status()\n\
+          \        with open(jsonl_file, 'wb') as f:\n            for chunk in r.iter_content(chunk_size=8192):\n\
+          \                f.write(chunk)\n\n    # load dataset from jsonl\n    dataset\
+          \ = load_dataset(\"json\", data_files=jsonl_file)\n    # save jsonl\n  \
+          \  dataset['train'].to_json(output_dataset.path, force_ascii=False)\n  \
+          \  output_dataset.metadata[\"original_url\"] = jsonl_url\n\n"
+        image: python:3.11
+    exec-save-jsonl-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - save_jsonl
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.8.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'datasets' &&\
+          \ \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef save_jsonl(\n    jsonl_url: str,\n    output_dataset: Output[Dataset]\n\
+          ):\n    import requests\n    from datasets import load_dataset\n\n    jsonl_file\
+          \ = \"temp.jsonl\"\n    # fetch jsonl file and save temp file\n    with\
+          \ requests.get(jsonl_url, stream=True) as r:\n        r.raise_for_status()\n\
+          \        with open(jsonl_file, 'wb') as f:\n            for chunk in r.iter_content(chunk_size=8192):\n\
+          \                f.write(chunk)\n\n    # load dataset from jsonl\n    dataset\
+          \ = load_dataset(\"json\", data_files=jsonl_file)\n    # save jsonl\n  \
+          \  dataset['train'].to_json(output_dataset.path, force_ascii=False)\n  \
+          \  output_dataset.metadata[\"original_url\"] = jsonl_url\n\n"
+        image: python:3.11
+    exec-save-train-func:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - save_train_func
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.8.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'requests' &&\
+          \ \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef save_train_func(training_code_url:str) -> str:\n    import requests\n\
+          \n    response = requests.get(training_code_url)\n    training_code = response.content.decode('utf-8')\n\
+          \n    print(f\"training code:\\n\\n{training_code}\")\n\n    return training_code\n\
+          \n"
+        image: python:3.11
+    exec-validate-dataset:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - validate_dataset
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.8.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'datasets' &&\
+          \ \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef validate_dataset(\n    jsonl_dataset: Input[Dataset],\n    valid_dataset:\
+          \ Output[Dataset]\n):\n    from datasets import load_dataset\n\n    dataset\
+          \ = load_dataset(\"json\", data_files=jsonl_dataset.path)\n\n    # conversational\
+          \ format validation\n    def is_chat_template(examples):\n        messages\
+          \ = examples[\"messages\"]\n        result = []\n        for message in\
+          \ messages:\n            checked = 0\n            for item in message:\n\
+          \                if isinstance(item[\"role\"], str) and isinstance(item[\"\
+          content\"], str):\n                    checked += 1\n            result.append(len(message)\
+          \ == checked and checked > 0)\n        return result\n\n\n    feature_set\
+          \ = dataset['train'].features\n    if \"messages\" in feature_set:\n   \
+          \     dataset = dataset.filter(is_chat_template, batched=True).select_columns(\"\
+          messages\")\n    elif ({\"prompt\", \"completion\"}.issubset(feature_set)\
+          \ and \n          feature_set[\"prompt\"].dtype == 'string' and feature_set[\"\
+          completion\"].dtype == 'string'):\n        dataset = dataset.select_columns([\"\
+          prompt\", \"completion\"])\n    else:\n        raise ValueError(\"data should\
+          \ be conversational format or instruction format\") \n    dataset['train'].to_json(valid_dataset.path,\
+          \ force_ascii=False)\n    valid_dataset.metadata[\"original_url\"]= jsonl_dataset.metadata[\"\
+          original_url\"]\n\n"
+        image: python:3.11
+    exec-validate-dataset-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - validate_dataset
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.8.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'datasets' &&\
+          \ \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef validate_dataset(\n    jsonl_dataset: Input[Dataset],\n    valid_dataset:\
+          \ Output[Dataset]\n):\n    from datasets import load_dataset\n\n    dataset\
+          \ = load_dataset(\"json\", data_files=jsonl_dataset.path)\n\n    # conversational\
+          \ format validation\n    def is_chat_template(examples):\n        messages\
+          \ = examples[\"messages\"]\n        result = []\n        for message in\
+          \ messages:\n            checked = 0\n            for item in message:\n\
+          \                if isinstance(item[\"role\"], str) and isinstance(item[\"\
+          content\"], str):\n                    checked += 1\n            result.append(len(message)\
+          \ == checked and checked > 0)\n        return result\n\n\n    feature_set\
+          \ = dataset['train'].features\n    if \"messages\" in feature_set:\n   \
+          \     dataset = dataset.filter(is_chat_template, batched=True).select_columns(\"\
+          messages\")\n    elif ({\"prompt\", \"completion\"}.issubset(feature_set)\
+          \ and \n          feature_set[\"prompt\"].dtype == 'string' and feature_set[\"\
+          completion\"].dtype == 'string'):\n        dataset = dataset.select_columns([\"\
+          prompt\", \"completion\"])\n    else:\n        raise ValueError(\"data should\
+          \ be conversational format or instruction format\") \n    dataset['train'].to_json(valid_dataset.path,\
+          \ force_ascii=False)\n    valid_dataset.metadata[\"original_url\"]= jsonl_dataset.metadata[\"\
+          original_url\"]\n\n"
+        image: python:3.11
+pipelineInfo:
+  description: finetuning with huggingface TRL SFTTrainer
+  name: luckyvicky-finetuning
+root:
+  dag:
+    tasks:
+      createpvc:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-createpvc
+        inputs:
+          parameters:
+            access_modes:
+              runtimeValue:
+                constant:
+                - ReadWriteMany
+            pvc_name:
+              runtimeValue:
+                constant: newjeans-finetuning-pvc-rwx
+            size:
+              runtimeValue:
+                constant: 1024Gi
+            storage_class_name:
+              runtimeValue:
+                constant: filestore-rwx
+        taskInfo:
+          name: createpvc
+      generate-pytorchjob-script:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-generate-pytorchjob-script
+        dependentTasks:
+        - json-to-dict
+        - save-train-func
+        - validate-dataset
+        - validate-dataset-2
+        inputs:
+          artifacts:
+            eval_dataset:
+              taskOutputArtifact:
+                outputArtifactKey: valid_dataset
+                producerTask: validate-dataset-2
+            train_dataset:
+              taskOutputArtifact:
+                outputArtifactKey: valid_dataset
+                producerTask: validate-dataset
+          parameters:
+            batch_size:
+              componentInputParameter: batch_size
+            deepspeed_config:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: json-to-dict
+            job_name:
+              componentInputParameter: job_name
+            model_id:
+              componentInputParameter: model_id
+            mount_path:
+              runtimeValue:
+                constant: /train
+            num_train_epochs:
+              componentInputParameter: num_train_epochs
+            training_code:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: save-train-func
+        taskInfo:
+          name: generate-pytorchjob-script
+      json-to-dict:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-json-to-dict
+        inputs:
+          parameters:
+            extras_to_update:
+              componentInputParameter: deepspeed_config_extras
+            json_url:
+              componentInputParameter: deepspeed_config_url
+        taskInfo:
+          name: json-to-dict
+      run-pytorchjob:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-run-pytorchjob
+        dependentTasks:
+        - createpvc
+        - generate-pytorchjob-script
+        inputs:
+          parameters:
+            base_image:
+              componentInputParameter: base_image
+            exec_script:
+              taskOutputParameter:
+                outputParameterKey: exec_script
+                producerTask: generate-pytorchjob-script
+            job_id:
+              taskOutputParameter:
+                outputParameterKey: job_id
+                producerTask: generate-pytorchjob-script
+            job_name:
+              componentInputParameter: job_name
+            master_replica:
+              componentInputParameter: master_replica
+            master_resources:
+              componentInputParameter: master_resources
+            mount_path:
+              runtimeValue:
+                constant: /train
+            pvc_name:
+              taskOutputParameter:
+                outputParameterKey: name
+                producerTask: createpvc
+            worker_replica:
+              componentInputParameter: worker_replica
+            worker_resources:
+              componentInputParameter: worker_resources
+        taskInfo:
+          name: run-pytorchjob
+      save-jsonl:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-save-jsonl
+        inputs:
+          parameters:
+            jsonl_url:
+              componentInputParameter: train_data_url
+        taskInfo:
+          name: save-jsonl
+      save-jsonl-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-save-jsonl-2
+        inputs:
+          parameters:
+            jsonl_url:
+              componentInputParameter: eval_data_url
+        taskInfo:
+          name: save-jsonl-2
+      save-train-func:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-save-train-func
+        inputs:
+          parameters:
+            training_code_url:
+              componentInputParameter: training_code_url
+        taskInfo:
+          name: save-train-func
+      validate-dataset:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-validate-dataset
+        dependentTasks:
+        - save-jsonl
+        inputs:
+          artifacts:
+            jsonl_dataset:
+              taskOutputArtifact:
+                outputArtifactKey: output_dataset
+                producerTask: save-jsonl
+        taskInfo:
+          name: validate-dataset
+      validate-dataset-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-validate-dataset-2
+        dependentTasks:
+        - save-jsonl-2
+        inputs:
+          artifacts:
+            jsonl_dataset:
+              taskOutputArtifact:
+                outputArtifactKey: output_dataset
+                producerTask: save-jsonl-2
+        taskInfo:
+          name: validate-dataset-2
+  inputDefinitions:
+    parameters:
+      base_image:
+        defaultValue: asia-northeast3-docker.pkg.dev/silver-bridge-433413-f3/llmops/transformers-pytorch-deepspeed-latest-gpu:deepspeed-v0.15.0-24.06.py3
+        description: base image for pytorchjob.
+        isOptional: true
+        parameterType: STRING
+      batch_size:
+        defaultValue: 4.0
+        description: batch size as training argument.
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      deepspeed_config_extras:
+        defaultValue: '{}'
+        description: extra updates of key, value for deepspeed config in json format.
+        isOptional: true
+        parameterType: STRING
+      deepspeed_config_url:
+        defaultValue: https://github.com/questcollector/llmops-manifests/raw/second/script/deepspeed.json
+        description: url of deepspeed config in json format.
+        isOptional: true
+        parameterType: STRING
+      eval_data_url:
+        defaultValue: https://drive.google.com/uc?id=1loRPD53t6K0kdMRa6lv7qRO5rzDLanRR
+        description: url of evaluation dataset in jsonl file.
+        isOptional: true
+        parameterType: STRING
+      job_name:
+        defaultValue: luckyvicky
+        description: prefix of pytorchjob/output model
+        isOptional: true
+        parameterType: STRING
+      master_replica:
+        defaultValue: 1.0
+        description: replica size for pytorchjob master nodes
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      master_resources:
+        defaultValue: '{"cpu":"2", "memory": "55Gi", "nvidia.com/gpu": "1"}'
+        description: master node resource spec in json format
+        isOptional: true
+        parameterType: STRING
+      model_id:
+        defaultValue: unsloth/Meta-Llama-3.1-8B-Instruct
+        description: pretrained model for finetuning.
+        isOptional: true
+        parameterType: STRING
+      num_train_epochs:
+        defaultValue: 10.0
+        description: number of training epochs as training argument.
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      train_data_url:
+        defaultValue: https://drive.google.com/uc?id=1YHU91AS53lIqoSF8NUXxZV-Rnd2vHH_6
+        description: url of train dataset in jsonl file.
+        isOptional: true
+        parameterType: STRING
+      training_code_url:
+        defaultValue: https://github.com/questcollector/llmops-manifests/raw/second/script/sft-train.py
+        description: url of training code.
+        isOptional: true
+        parameterType: STRING
+      worker_replica:
+        defaultValue: 1.0
+        description: replica size for pytorchjob worker nodes
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      worker_resources:
+        defaultValue: '{"cpu":"2", "memory": "20Gi", "nvidia.com/gpu": "1"}'
+        description: worker node resource spec in json format
+        isOptional: true
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.8.0

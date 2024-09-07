@@ -40,7 +40,7 @@ prometheus:
         target_label: pod
       - source_labels: [__meta_kubernetes_service_name]
         target_label: service
-    - job_name: 'tgi'
+    - job_name: 'vllm'
       scrape_interval: 3s
       kubernetes_sd_configs:
       - role: pod
@@ -65,6 +65,8 @@ grafana:
       serve_from_sub_path: true
     security:
       allow_embedding: true
+    auth.anonymous:
+      enabled: true
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -78,45 +80,13 @@ grafana:
     dashboardproviders.yaml:
       apiVersion: 1
       providers:
-      - name: 'knative-http-requests'
+      - name: 'default'
         orgId: 1
         folder: ''
         type: file
         disableDeletion: false
         editable: true
         options:
-          path: /var/lib/grafana/dashboards/knative-http-requests
-      - name: 'knative-cpu-memory-usage'
-        orgId: 1
-        folder: ''
-        type: file
-        disableDeletion: false
-        editable: true
-        options:
-          path: /var/lib/grafana/dashboards/knative-cpu-memory-usage
-      - name: 'knative-gpu-memory-usage'
-        orgId: 1
-        folder: ''
-        type: file
-        disableDeletion: false
-        editable: true
-        options:
-          path: /var/lib/grafana/dashboards/knative-gpu-memory-usage
-      - name: 'dcgm'
-        orgId: 1
-        folder: ''
-        type: file
-        disableDeletion: false
-        editable: true
-        options:
-          path: /var/lib/grafana/dashboards/dcgm
-  dashboards:
-    default:
-      knative-http-requests: 
-        file: dashboards/revision-http-requests.json
-      knative-cpu-memory-usage:
-        file: dashboards/revision-cpu-memory-usage.json
-      knative-gpu-memory-usage:
-        file: dashboards/revision-gpu-memory-usage.json
-      dcgm:
-        file: dashboards/NVIDIA DCGM Exporter.json
+          path: /var/lib/grafana/dashboards/default
+  dashboardsConfigMaps:
+    default: grafana-dashboards
