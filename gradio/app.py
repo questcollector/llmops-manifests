@@ -5,9 +5,11 @@ from urllib.parse import urljoin
 
 INFERENCE_SERVICE = os.environ["INFERENCE_SERVICE"]
 MODLE_NAME = os.environ["MODEL_NAME"]
+API_KEY = os.environ["API_KEY"]
+
 client = OpenAI(
     base_url=urljoin(INFERENCE_SERVICE, "v1"), 
-    api_key="-",
+    api_key=API_KEY,
     default_headers={
         "Content-Type": "application/json",
     })
