@@ -632,7 +632,7 @@ root:
                 - ReadWriteMany
             pvc_name:
               runtimeValue:
-                constant: newjeans-finetuning-pvc-rwx
+                constant: luckyvicky-finetuning-pvc-rwx
             size:
               runtimeValue:
                 constant: 1024Gi

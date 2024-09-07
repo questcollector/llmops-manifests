@@ -133,6 +133,10 @@ components:
           parameterType: STRING
         pytorchjob_name:
           parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
   comp-run-pytorchjob:
     executorLabel: exec-run-pytorchjob
     inputDefinitions:
@@ -348,10 +352,11 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef run_isvc(\n    pvc_name: str,\n    model_id:str,\n    pytorchjob_name:\
-          \ str,\n):\n    from kserve import constants\n    from kserve import (\n\
-          \        V1beta1PredictorSpec,\n        V1beta1InferenceServiceSpec,\n \
-          \       V1beta1InferenceService,\n    )\n    from kubernetes import client\n\
-          \n    ## get namespace\n    with open(\"/var/run/secrets/kubernetes.io/serviceaccount/namespace\"\
+          \ str,\n) -> str:\n    from kserve import constants\n    from kserve import\
+          \ (\n        V1beta1PredictorSpec,\n        V1beta1InferenceServiceSpec,\n\
+          \        V1beta1InferenceService,\n    )\n    from kubernetes import client\n\
+          \    job_name, job_id = pytorchjob_name.split(\"-\")\n\n    ## get namespace\n\
+          \    with open(\"/var/run/secrets/kubernetes.io/serviceaccount/namespace\"\
           , \"r\") as f:\n        namespace = f.read()\n    predictor_spec = V1beta1PredictorSpec(\n\
           \        containers=[\n            client.V1Container(\n               \
           \ args=[\n                    \"--model\", f\"{model_id}\",\n          \
@@ -359,8 +364,8 @@ deploymentSpec:
           , \"16384\",\n                    \"--quantization\", \"bitsandbytes\",\n\
           \                    \"--load-format\", \"bitsandbytes\",\n            \
           \        \"--enable-lora\",\n                    \"--lora-modules\", f\"\
-          luckyvicky=/mnt/models/{pytorchjob_name}\"\n                ],\n       \
-          \         image=\"asia-northeast3-docker.pkg.dev/silver-bridge-433413-f3/llmops/vllm/vllm-openai:v0.6.0-bitsandbytes\"\
+          luckyvicky=/mnt/models/{pytorchjob_name}\",\n                    \"--api-key\"\
+          , job_id\n                ],\n                image=\"asia-northeast3-docker.pkg.dev/silver-bridge-433413-f3/llmops/vllm/vllm-openai:v0.6.0-bitsandbytes\"\
           ,\n                name=\"kserve-container\",\n                ports=[\n\
           \                    client.V1ContainerPort(\n                        container_port=8000,\n\
           \                        protocol=\"TCP\",\n                    )\n    \
@@ -382,12 +387,13 @@ deploymentSpec:
           \ = V1beta1InferenceServiceSpec(predictor=predictor_spec)\n    inference_service\
           \ = V1beta1InferenceService(\n        api_version=constants.KSERVE_V1BETA1,\n\
           \        kind=constants.KSERVE_KIND,\n        metadata=client.V1ObjectMeta(\n\
-          \            name=\"luckyvicky\", \n            namespace=namespace, \n\
-          \            annotations={\n                \"sidecar.istio.io/inject\"\
-          : \"false\",\n                \"serving.kserve.io/enable-prometheus-scraping\"\
-          : \"true\"\n            }),\n        spec=inference_service_spec,\n    )\n\
-          \n    from kserve import KServeClient\n    kserve_client = KServeClient()\n\
-          \    kserve_client.create(inference_service, namespace=namespace)\n\n"
+          \            name=job_name, \n            namespace=namespace, \n      \
+          \      annotations={\n                \"sidecar.istio.io/inject\": \"false\"\
+          ,\n                \"serving.kserve.io/enable-prometheus-scraping\": \"\
+          true\"\n            }),\n        spec=inference_service_spec,\n    )\n\n\
+          \    from kserve import KServeClient\n    kserve_client = KServeClient()\n\
+          \    kserve_client.create(inference_service, namespace=namespace)\n    return\
+          \ job_id\n\n"
         image: python:3.11
     exec-run-pytorchjob:
       container:
@@ -711,7 +717,7 @@ root:
                 - ReadWriteMany
             pvc_name:
               runtimeValue:
-                constant: newjeans-finetuning-pvc-rwx
+                constant: luckyvicky-finetuning-pvc-rwx
             size:
               runtimeValue:
                 constant: 1024Gi
