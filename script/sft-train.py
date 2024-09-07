@@ -42,19 +42,20 @@ class ScriptArguments:
     per_device_eval_batch_size: Optional[int] = field(default=4, metadata={"help": "batch size for evaluation"})
     num_train_epochs: Optional[int] = field(default=10, metadata={"help": "number of training epochs"})
     deepspeed: Optional[str] = field(default="deepspeed.json", metadata={"help": "training job id"})
+    mount_path: Optional[str] = field(default="/train", metadata={"help": "mount path for PVC"})
 
     # LoraConfig
     lora_alpha: Optional[float] = field(default=16, metadata={"help": "the lora alpha parameter"})
     lora_dropout: Optional[float] = field(default=0.05, metadata={"help": "the lora dropout parameter"})
     lora_r: Optional[int] = field(default=8, metadata={"help": "the lora r parameter"})
 
-parser = HfArgumentParser(ScriptArguments)
-script_args = parser.parse_args_into_dataclasses()
+parser = HfArgumentParser((ScriptArguments))
+script_args = parser.parse_args_into_dataclasses()[0]
 
 # SFTConfig
 output_dir = os.path.join(
     script_args.mount_path, 
-    f"{script_args.job_name}-{script_args.job_id}"
+    f"{script_args.training_job_name}-{script_args.training_job_id}"
 )
 training_args = SFTConfig(
     output_dir=output_dir,
