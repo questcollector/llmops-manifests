@@ -23,11 +23,11 @@ spec:
     - name: INFERENCE_SERVICE
       value: http://luckyvicky.admin-profile.svc.cluster.local
     - name: MODEL_NAME
-      value: Meta-Llama-3-Instruct
+      value: unsloth/Meta-Llama-3.1-8B-Instruct
     - name: SYSTEM_PROMPT
       valueFrom:
         configMapKeyRef:
-          name: system_prompt
+          name: system-prompt
           key: SYSTEM_PROMPT
     ports:
       - containerPort: 7860
@@ -66,7 +66,7 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: system_prompt
+  name: system-prompt
   namespace: admin-profile
 data:
   SYSTEM_PROMPT: |
