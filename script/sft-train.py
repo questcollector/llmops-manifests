@@ -123,6 +123,9 @@ def download_object_and_convert_to_dataset(minio_client, url):
     dataset = load_dataset("json", data_files=os.path.join(extract_dir, "data"))
     return dataset['train']
 
+print(f"train dataset uri: {script_args.train_dataset_uri}")
+print(f"eval dataset uri: {script_args.eval_dataset_uri}")
+
 train_dataset = download_object_and_convert_to_dataset(minio_client, script_args.train_dataset_uri)
 eval_dataset = download_object_and_convert_to_dataset(minio_client, script_args.eval_dataset_uri)
 
