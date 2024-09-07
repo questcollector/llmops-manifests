@@ -24,8 +24,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "type": "prometheus"
+        
       },
       "fieldConfig": {
         "defaults": {
@@ -121,8 +121,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "type": "prometheus"
+        
       },
       "fieldConfig": {
         "defaults": {
@@ -231,8 +231,8 @@
           "value": "knative-serving"
         },
         "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "type": "prometheus"
+          
         },
         "definition": "label_values(kube_pod_labels,namespace)",
         "hide": 0,
@@ -260,8 +260,8 @@
           "value": ""
         },
         "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "type": "prometheus"
+          
         },
         "definition": "label_values(kube_pod_labels{label_serving_knative_dev_configuration=~\".+\", namespace=\"$namespace\"},label_serving_knative_dev_configuration)",
         "hide": 0,
@@ -289,8 +289,8 @@
           "value": ""
         },
         "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
+          "type": "prometheus"
+          
         },
         "definition": "label_values(kube_pod_labels{label_serving_knative_dev_configuration=~\".+\", namespace=\"$namespace\"},label_serving_knative_dev_revision)",
         "hide": 0,

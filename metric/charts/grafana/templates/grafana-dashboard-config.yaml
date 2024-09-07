@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  labels:
+    grafana_dashboard: "1"
+data:
+  "dgcm.json": |
+{{ .Files.Get "dashboards/NVIDIA DCGM Exporter.json" | indent 4 }}
+  "revision-cpu-memory-usage.json": |
+{{ .Files.Get "dashboards/revision-cpu-memory-usage.json" | indent 4 }}
+  "revision-gpu-memory-usage.json": |
+{{ .Files.Get "dashboards/revision-gpu-memory-usage.json" | indent 4 }}
+  "revision-http-requests.json": |
+{{ .Files.Get "dashboards/revision-http-requests.json" | indent 4 }}
