@@ -26,6 +26,8 @@ sed -i 's/<<client_secret>>/'$client_secret'/g' ../common/dex/overlays/google-oa
 ## oauth2-proxy
 sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/oauth2-proxy/components/istio-external-auth/requestauthentication.dex-jwt.yaml
 sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/oauth2-proxy/base/oauth2_proxy.cfg
+sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/oauth2-proxy/components/istio-external-auth/authorizationpolicy.istio-ingressgateway-oauth2-proxy.yaml
+sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/oauth2-proxy/components/istio-external-auth/authorizationpolicy.istio-ingressgateway-require-jwt.yaml
 sed -i 's/<<client_id>>/'$client_id'/g' ../common/oauth2-proxy/base/kustomization.yaml
 sed -i 's/<<client_secret>>/'$client_secret'/g' ../common/oauth2-proxy/base/kustomization.yaml
 ## katib
