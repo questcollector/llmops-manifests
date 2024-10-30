@@ -43,11 +43,11 @@ resources:
 # oauth2-proxy
 # NOTE: only uncomment ONE of the following overlays, depending on your cluster type
 #- ../common/oauth2-proxy/overlays/m2m-dex-only     # for all clusters
-#- ../common/oauth2-proxy/overlays/m2m-dex-and-kind # for KIND clusters (allows K8S JWTs for gateway auth)
+- ../common/oauth2-proxy/overlays/m2m-dex-and-kind # for KIND clusters (allows K8S JWTs for gateway auth)
 #- ../common/oauth2-proxy/overlays/m2m-dex-and-eks  # for EKS clusters (NOTE: requires you to configure issuer, see overlay)
-- ../common/oauth2-proxy/overlays/m2m-gcp
+
 # Dex
-# - ../common/dex/overlays/oauth2-proxy
+- ../common/dex/overlays/google-oauth2-client
 # KNative
 - ../common/knative/knative-serving/overlays/gateways
 # Uncomment the following line if `knative-eventing` is required

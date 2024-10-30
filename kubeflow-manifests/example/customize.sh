@@ -20,12 +20,12 @@ sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/istio-1-22/istio-install/overlays/gk
 sed -i 's/<<domain>>/'$DOMAIN'/' ../common/knative/knative-serving/overlays/gateways/patches/config-patch.yaml
 sed -i 's/<<domain>>/'$DOMAIN'/' ../common/knative/knative-serving/overlays/gateways/gateway.yaml
 ## dex
-# sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/dex/overlays/google-oauth2-client/config-map.yaml
-
+sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/dex/overlays/google-oauth2-client/config-map.yaml
+sed -i 's/<<client_id>>/'$client_id'/g' ../common/dex/overlays/google-oauth2-client/config-map.yaml
+sed -i 's/<<client_secret>>/'$client_secret'/g' ../common/dex/overlays/google-oauth2-client/config-map.yaml
 ## oauth2-proxy
-# sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/oauth2-proxy/components/istio-external-auth-domain/requestauthentication.dex-jwt.yaml
-# sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/oauth2-proxy/components/istio-external-auth-domain/authorizationpolicy.istio-ingressgateway-oauth2-proxy.yaml
-# sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/oauth2-proxy/overlays/domain/oauth2-proxy-config.yaml
+sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/oauth2-proxy/components/istio-external-auth/requestauthentication.dex-jwt.yaml
+sed -i 's/<<domain>>/'$DOMAIN'/g' ../common/oauth2-proxy/base/oauth2_proxy.cfg
 sed -i 's/<<client_id>>/'$client_id'/g' ../common/oauth2-proxy/base/kustomization.yaml
 sed -i 's/<<client_secret>>/'$client_secret'/g' ../common/oauth2-proxy/base/kustomization.yaml
 ## katib

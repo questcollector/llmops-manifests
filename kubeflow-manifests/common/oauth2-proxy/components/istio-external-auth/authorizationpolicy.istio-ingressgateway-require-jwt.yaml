@@ -22,3 +22,4 @@ spec:
         - /dex/*
         - /dex/**
         - /oauth2/*
+        - /v1/**

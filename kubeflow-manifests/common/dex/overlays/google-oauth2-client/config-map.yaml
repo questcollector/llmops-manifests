@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dex
+data:
+  config.yaml: |
+    issuer: https://kubeflow.<<domain>>/dex
+    storage:
+      type: kubernetes
+      config:
+        inCluster: true
+    web:
+      http: 0.0.0.0:5556
+    logger:
+      level: "debug"
+      format: text
+    connectors:
+    - type: google
+      id: google
+      name: Google
+      config:
+        # Connector config values starting with a "$" will read from the environment.
+        clientID: <<client_id>>
+        clientSecret: <<client_secret>>
+        # Dex's issuer URL + "/callback"
+        redirectURI: https://kubeflow.<<domain>>/dex/callback
+    oauth2:
+      skipApprovalScreen: true
+    enablePasswordDB: true
+    staticPasswords:
+    - email: user@example.com
+      hashFromEnv: DEX_USER_PASSWORD
+      username: user
+      userID: "15841185641784"
+    staticClients:
+    # https://github.com/dexidp/dex/pull/1664
+    - idEnv: OIDC_CLIENT_ID
+      redirectURIs: ["/oauth2/callback"]
+      name: 'Dex Login Application'
+      secretEnv: OIDC_CLIENT_SECRET
