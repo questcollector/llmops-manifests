@@ -30,10 +30,7 @@ spec:
           name: system-prompt
           key: SYSTEM_PROMPT
     - name: API_KEY
-      valueFrom:
-        secretKeyRef:
-          name: api-key
-          key: API_KEY
+      value: EMPTY
     ports:
       - containerPort: 7860
         name: gradio-web
