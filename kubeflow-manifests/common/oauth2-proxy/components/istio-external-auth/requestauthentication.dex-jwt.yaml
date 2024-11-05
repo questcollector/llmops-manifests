@@ -17,7 +17,7 @@ spec:
 
   jwtRules:
   - issuer: https://kubeflow.<<domain>>/dex
-
+    jwksUri: https://kubeflow.<<domain>>/dex/keys
     # `forwardOriginalToken` is not strictly required to be true.
     # there are pros and cons to each value:
     #  - true: the original token is forwarded to the destination service
