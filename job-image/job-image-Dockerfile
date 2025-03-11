@@ -8,10 +8,12 @@ RUN apt install -y libaio-dev
 RUN python3 -m pip install --no-cache-dir --upgrade pip
  
 ARG REF=main
+# transformers 4.50.0.dev0
 RUN git clone https://github.com/huggingface/transformers && cd transformers && git checkout $REF
  
 RUN python3 -m pip install --no-cache-dir ./transformers[deepspeed-testing]
 
+# accelerate 1.4.0.dev0
 RUN python3 -m pip install --no-cache-dir git+https://github.com/huggingface/accelerate@main#egg=accelerate
  
 # Uninstall `transformer-engine` shipped with the base image
@@ -25,7 +27,7 @@ RUN python3 -m pip uninstall -y deepspeed
 # This has to be run (again) inside the GPU VMs running the tests.
 # The installation works here, but some tests fail, if we don't pre-build deepspeed again in the VMs running the tests.
 # TODO: Find out why test fail.
-RUN DS_BUILD_CPU_ADAM=1 DS_BUILD_FUSED_ADAM=1 python3 -m pip install deepspeed --global-option="build_ext" --global-option="-j8" --no-cache -v --disable-pip-version-check 2>&1
+RUN DS_BUILD_CPU_ADAM=1 DS_BUILD_FUSED_ADAM=1 python3 -m pip install deepspeed==0.16.4 --global-option="build_ext" --global-option="-j8" --no-cache -v --disable-pip-version-check 2>&1
  
 # When installing in editable mode, `transformers` is not recognized as a package.
 # this line must be added in order for python to be aware of transformers.
@@ -34,4 +36,4 @@ RUN cd transformers && python3 setup.py develop
 RUN python3 -c "from deepspeed.launcher.runner import main"
  
 # install packages
-RUN python3 -m pip install --no-cache-dir peft trl mlflow boto3
+RUN python3 -m pip install --no-cache-dir peft==0.14.0 trl==0.15.2 mlflow boto3 liger-kernel==0.5.4
