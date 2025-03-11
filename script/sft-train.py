@@ -13,6 +13,7 @@ from datasets import load_dataset
 from peft import LoraConfig, TaskType
 import torch
 import torch.distributed as dist
+import torch.cuda
 import mlflow
 import evaluate
 import numpy as np
@@ -37,7 +38,7 @@ class ScriptArguments:
     train_dataset_uri: Optional[str] = field(default="Junnos/luckyvicky-DPO", metadata={"help": "the train dataset path"})
     eval_dataset_uri: Optional[str] = field(default="Junnos/luckyvicky-DPO", metadata={"help": "the eval dataset path"})
     training_job_name: Optional[str] = field(default="sft-train", metadata={"help": "training job name"})
-    training_job_id: Optional[str] = field(default="vicky", metadata={"help": "training job id"})
+    training_job_id: Optional[str] = field(default="luckyvicky", metadata={"help": "training job id"})
     per_device_train_batch_size: Optional[int] = field(default=4, metadata={"help": "batch size for training"})
     per_device_eval_batch_size: Optional[int] = field(default=4, metadata={"help": "batch size for evaluation"})
     num_train_epochs: Optional[int] = field(default=10, metadata={"help": "number of training epochs"})
@@ -47,7 +48,7 @@ class ScriptArguments:
     # LoraConfig
     lora_alpha: Optional[float] = field(default=16, metadata={"help": "the lora alpha parameter"})
     lora_dropout: Optional[float] = field(default=0.05, metadata={"help": "the lora dropout parameter"})
-    lora_r: Optional[int] = field(default=8, metadata={"help": "the lora r parameter"})
+    lora_r: Optional[int] = field(default=32, metadata={"help": "the lora r parameter"})
 
 parser = HfArgumentParser((ScriptArguments))
 script_args = parser.parse_args_into_dataclasses()[0]
@@ -78,11 +79,13 @@ training_args = SFTConfig(
     packing=True,
     eval_on_start=True,
     disable_tqdm=True,
+    use_liger=True,
 )
 
 ## LoRA
 peft_config = LoraConfig(
     task_type=TaskType.CAUSAL_LM,
+    target_modules="all-linear",
     r=script_args.lora_r,
     lora_alpha=script_args.lora_alpha,
     lora_dropout=script_args.lora_dropout,
@@ -124,15 +127,17 @@ print(f"eval dataset uri: {script_args.eval_dataset_uri}")
 train_dataset = download_object_and_convert_to_dataset(minio_client, script_args.train_dataset_uri)
 eval_dataset = download_object_and_convert_to_dataset(minio_client, script_args.eval_dataset_uri)
 
+# start memory snapshot
+torch.cuda.memory._record_memory_history()
+
 # get tokenizer and model
 tokenizer = AutoTokenizer.from_pretrained(script_args.model_path, trust_remote_code=True)
-tokenizer.pad_token = tokenizer.eos_token
-tokenizer.padding_side = "right"
 
 model = AutoModelForCausalLM.from_pretrained(
-    script_args.model_path, 
+    script_args.model_path,
     trust_remote_code=True,
     torch_dtype=torch.bfloat16,
+    attn_implementation="flash_attention_2"
 )
 model.config.use_cache = False
 model.config.pretraining_tp = 1
@@ -141,7 +146,7 @@ model.config.pretraining_tp = 1
 trainer = SFTTrainer(
     args=training_args,
     model=model,
-    tokenizer=tokenizer,
+    processing_class=tokenizer,
     train_dataset=train_dataset,
     eval_dataset=eval_dataset,
     peft_config=peft_config,
@@ -167,6 +172,11 @@ if dist.get_rank() == 0:
 
 trainer.model.print_trainable_parameters()
 trainer.train()
+
+# dump memory snapshot
+torch.cuda.memory._dump_snapshot(f"{args.mount_path}/memory_snapshot_rank{dist.get_rank()}.pickle")
+torch.cuda.memory._record_memory_history(enabled=None)
+
 trainer.save_model()
 
 ## mlflow log model and end run
