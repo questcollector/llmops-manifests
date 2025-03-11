@@ -174,7 +174,7 @@ trainer.model.print_trainable_parameters()
 trainer.train()
 
 # dump memory snapshot
-torch.cuda.memory._dump_snapshot(f"{args.mount_path}/memory_snapshot_rank{dist.get_rank()}.pickle")
+torch.cuda.memory._dump_snapshot(f"{script_args.mount_path}/memory_snapshot_rank{dist.get_rank()}.pickle")
 torch.cuda.memory._record_memory_history(enabled=None)
 
 trainer.save_model()
