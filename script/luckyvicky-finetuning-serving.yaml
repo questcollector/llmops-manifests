@@ -352,8 +352,8 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef run_isvc(\n    pvc_name: str,\n    model_id:str,\n    pytorchjob_name:\
-          \ str,\n) -> str:\n    from kserve import constants\n    from kserve import\
-          \ (\n        V1beta1PredictorSpec,\n        V1beta1InferenceServiceSpec,\n\
+          \ str,\n) -> str:\n    import json\n    from kserve import constants\n \
+          \   from kserve import (\n        V1beta1PredictorSpec,\n        V1beta1InferenceServiceSpec,\n\
           \        V1beta1InferenceService,\n    )\n    from kubernetes import client\n\
           \    job_name, job_id = pytorchjob_name.split(\"-\")\n\n    lora_modules\
           \ = {\n        \"name\": job_name,\n        \"path\": f\"/mnt/models/{pytorchjob_name}\"\
@@ -366,16 +366,16 @@ deploymentSpec:
           , \"16384\",\n                    \"--quantization\", \"bitsandbytes\",\n\
           \                    \"--load-format\", \"bitsandbytes\",\n            \
           \        \"--enable-lora\",\n                    \"--lora-modules\", \n\
-          \                    json.dumps(lora_modules),\n                    \"--otlp-trace-endpoint\"\
+          \                    json.dumps(lora_modules),\n                    \"--otlp-traces-endpoint\"\
           ,\n                    \"grpc://$(HOST_IP):4317\",\n                   \
-          \ \"--max-lora-rank\", \"32\",\n                ],\n                image=\"\
-          asia-northeast3-docker.pkg.dev/tokyo-data-452811-t2/llmops/vllm/vllm-openai:v0.7.3-otel-bitsandbytes\"\
+          \ \"--max-lora-rank\", \"32\",\n                    \"--enforce-eager\"\n\
+          \                ],\n                image=\"asia-northeast3-docker.pkg.dev/tokyo-data-452811-t2/llmops/vllm/vllm-openai:v0.7.3-otel-bitsandbytes\"\
           ,\n                name=\"kserve-container\",\n                ports=[ \n\
           \                    client.V1ContainerPort(\n                        container_port=8000,\n\
           \                        protocol=\"TCP\",\n                    )\n    \
           \            ],\n                resources=client.V1ResourceRequirements(\n\
-          \                    limits={\"cpu\": \"2\", \"memory\": \"40Gi\", \"nvidia.com/gpu\"\
-          : \"1\"},\n                    requests={\"cpu\": \"2\", \"memory\": \"\
+          \                    limits={\"cpu\": \"8\", \"memory\": \"40Gi\", \"nvidia.com/gpu\"\
+          : \"1\"},\n                    requests={\"cpu\": \"4\", \"memory\": \"\
           25Gi\", \"nvidia.com/gpu\": \"1\"},\n                ),\n              \
           \  env=[\n                    client.V1EnvVar(\n                       \
           \ name=\"STORAGE_URI\",\n                        value=f\"pvc://{pvc_name}\"\
