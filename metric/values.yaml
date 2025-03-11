@@ -1,5 +1,6 @@
 prometheus:
   server:
+    fullnameOverride: prometheus-server
     baseURL: "http://localhost:80/prometheus"
     extraArgs:
       web.route-prefix: "/"
@@ -9,52 +10,20 @@ prometheus:
     metricLabelsAllowlist:
     - pods=[*]
   extraScrapeConfigs: |
-    - job_name: 'dcgm_exporter'
-      static_configs:
-        - targets: ['nvidia-dcgm-exporter.gmp-public:9400']
-    - job_name: 'knative-serving'
-      scrape_interval: 3s
+    - job_name: 'opentelemetry'
       kubernetes_sd_configs: 
       - role: pod
       relabel_configs:
       - action: keep
-        source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_label_role, __meta_kubernetes_pod_container_port_name]
-        regex: knative-serving;(controller|activator|autoscaler|webhook);metrics
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-      - source_labels: [__meta_kubernetes_service_name]
-        target_label: service
-    - job_name: queue-proxy
-      scrape_interval: 3s
-      kubernetes_sd_configs: 
-      - role: pod
-      relabel_configs:
-      - action: keep
-        source_labels: [__meta_kubernetes_pod_label_serving_knative_dev_revision, __meta_kubernetes_pod_container_port_name]
-        regex: (.*);http-usermetric
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-      - source_labels: [__meta_kubernetes_service_name]
-        target_label: service
-    - job_name: 'vllm'
-      scrape_interval: 3s
-      kubernetes_sd_configs:
-      - role: pod
-      relabel_configs:
-      - action: keep
-        source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_label_component, __meta_kubernetes_pod_container_port_name]
-        regex: (.*);predictor;user-port
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: namespace
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-      - source_labels: [__meta_kubernetes_service_name]
-        target_label: service
+        source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        regex: opentelemetry-collector
+      - source_labels: [__meta_kubernetes_pod_ip]
+        target_label: __address__
+        replacement: "$1:18888"
 grafana:
+  fullnameOverride: grafana
+  plugins:
+  - grafana-opensearch-datasource
   podLabels:
     app: grafana
   persistence:
@@ -67,15 +36,35 @@ grafana:
       allow_embedding: true
     auth.anonymous:
       enabled: true
+      org_name: "Main Org."
+      org_role: "Admin"
   datasources:
     datasources.yaml:
       apiVersion: 1
       datasources:
       - name: Prometheus
         type: prometheus
-        url: http://metric-prometheus-server.istio-system.svc.cluster.local
+        url: http://prometheus-server.metric.svc.cluster.local
         access: proxy
         isDefault: true
+      - name: Opensearch
+        type: grafana-opensearch-datasource
+        url: https://opensearch-cluster-master.metric.svc.cluster.local:9200
+        basicAuth: true
+        basicAuthUser: admin
+        secureJsonData:
+          basicAuthPassword: strongPassword123#
+        jsonData:
+          index: "llmops-log*"
+          logMessageField: body
+          flavor: 'opensearch'
+          pplEnabled: true
+          version: "2.16.0"
+          timeField: "@timestamp"
+          tlsAuth: false
+          tlsSkipVerify: true
+        access: proxy
+        isDefault: false        
   dashboardProviders:
     dashboardproviders.yaml:
       apiVersion: 1
@@ -90,3 +79,153 @@ grafana:
           path: /var/lib/grafana/dashboards/default
   dashboardsConfigMaps:
     default: grafana-dashboards
+opentelemetry-collector:
+  fullnameOverride: opentelemetry-collector
+  image:
+    repository: otel/opentelemetry-collector-contrib
+  mode: daemonset
+  ports:
+    metrics:
+      enabled: true
+      containerPort: 18888
+  presets:
+    logsCollection:
+      enabled: true
+    kubernetesAttributes:
+      enabled: true
+      extractAllPodLabels: true
+      extractAllPodAnnotations: true
+  config:
+    extensions:
+      basicauth/opensearch:
+        client_auth:
+          username: admin
+          password: strongPassword123#
+    exporters:
+      otlp:
+        endpoint: jaeger-collector.metric.svc.cluster.local:4317
+        tls:
+          insecure: true
+      opensearch:
+        logs_index: llmops-log
+        http:
+          endpoint: https://opensearch-cluster-master.metric.svc.cluster.local:9200
+          auth:
+            authenticator: basicauth/opensearch
+          tls:
+            insecure_skip_verify: true
+      prometheus:
+        endpoint: "0.0.0.0:18888"
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+          - job_name: 'dcgm_exporter'
+            static_configs:
+            - targets: ['nvidia-dcgm-exporter.gmp-public:9400']
+            relabel_configs:
+            - action: keep
+              source_labels: 
+              - __meta_kubernetes_pod_node_name
+              regex: ${env:K8S_NODE_NAME}
+          - job_name: 'knative-serving'
+            scrape_interval: 3s
+            kubernetes_sd_configs: 
+            - role: pod
+            relabel_configs:
+            - action: keep
+              source_labels: 
+              - __meta_kubernetes_namespace
+              - __meta_kubernetes_pod_label_role
+              - __meta_kubernetes_pod_container_port_name
+              - __meta_kubernetes_pod_node_name
+              regex: knative-serving;(controller|activator|autoscaler|webhook);metrics;${env:K8S_NODE_NAME}
+            - source_labels: [__meta_kubernetes_namespace]
+              target_label: namespace
+            - source_labels: [__meta_kubernetes_pod_name]
+              target_label: pod
+            - source_labels: [__meta_kubernetes_service_name]
+              target_label: service
+          - job_name: queue-proxy
+            scrape_interval: 3s
+            kubernetes_sd_configs: 
+            - role: pod
+            relabel_configs:
+            - action: keep
+              source_labels: 
+              - __meta_kubernetes_pod_label_serving_knative_dev_revision
+              - __meta_kubernetes_pod_container_port_name
+              - __meta_kubernetes_pod_node_name
+              regex: (.*);http-usermetric;${env:K8S_NODE_NAME}
+            - source_labels: [__meta_kubernetes_namespace]
+              target_label: namespace
+            - source_labels: [__meta_kubernetes_pod_name]
+              target_label: pod
+            - source_labels: [__meta_kubernetes_service_name]
+              target_label: service
+          - job_name: 'vllm'
+            scrape_interval: 3s
+            kubernetes_sd_configs:
+            - role: pod
+            relabel_configs:
+            - action: keep
+              source_labels: 
+              - __meta_kubernetes_namespace
+              - __meta_kubernetes_pod_label_component
+              - __meta_kubernetes_pod_container_name
+              - __meta_kubernetes_pod_node_name
+              regex: (.*);predictor;kserve-container;${env:K8S_NODE_NAME}
+            - source_labels: [__meta_kubernetes_namespace]
+              target_label: namespace
+            - source_labels: [__meta_kubernetes_pod_name]
+              target_label: pod
+            - source_labels: [__meta_kubernetes_service_name]
+              target_label: service
+    service:
+      extensions:
+      - basicauth/opensearch
+      - health_check
+      pipelines:
+        logs:
+          exporters:
+          - opensearch
+          processors:
+          - memory_limiter
+          - batch
+          - k8sattributes
+        traces:
+          exporters:
+          - otlp
+          processors:
+          - memory_limiter
+          - batch
+          - k8sattributes
+          receivers:
+          - otlp
+        metrics:
+          exporters:
+          - prometheus
+          receivers:
+          - prometheus
+opensearch:
+  singleNode: 'true'
+  extraEnvs:
+  - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+    value: strongPassword123#
+jaeger:
+  fullnameOverride: jaeger
+  provisionDataStore:
+    cassandra: false
+  allInOne:
+    enabled: true
+    extraEnv:
+    - name: QUERY_BASE_PATH
+      value: /jaeger
+  storage:
+    type: memory
+  agent:
+    enabled: false
+  collector:
+    enabled: false
+  query:
+    enabled: false
