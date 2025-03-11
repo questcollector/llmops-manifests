@@ -2,20 +2,20 @@
 # Name: luckyvicky-finetuning
 # Description: finetuning with huggingface TRL SFTTrainer
 # Inputs:
-#    base_image: str [Default: 'asia-northeast3-docker.pkg.dev/silver-bridge-433413-f3/llmops/transformers-pytorch-deepspeed-latest-gpu:deepspeed-v0.15.0-24.06.py3']
+#    base_image: str [Default: 'asia-northeast3-docker.pkg.dev/tokyo-data-452811-t2/llmops/transformers-deepspeed:v4.49.0-v0.16.4-24.06']
 #    batch_size: int [Default: 4.0]
 #    deepspeed_config_extras: str [Default: '{}']
-#    deepspeed_config_url: str [Default: 'https://github.com/questcollector/llmops-manifests/raw/second/script/deepspeed.json']
+#    deepspeed_config_url: str [Default: 'https://github.com/questcollector/llmops-manifests/raw/main/script/deepspeed.json']
 #    eval_data_url: str [Default: 'https://drive.google.com/uc?id=1loRPD53t6K0kdMRa6lv7qRO5rzDLanRR']
 #    job_name: str [Default: 'luckyvicky']
+#    limits_resources: str [Default: '{"cpu":"4", "memory": "55Gi", "nvidia.com/gpu": "1"}']
 #    master_replica: int [Default: 1.0]
-#    master_resources: str [Default: '{"cpu":"2", "memory": "55Gi", "nvidia.com/gpu": "1"}']
 #    model_id: str [Default: 'unsloth/Meta-Llama-3.1-8B-Instruct']
 #    num_train_epochs: int [Default: 10.0]
+#    requests_resources: str [Default: '{"cpu":"2", "memory": "20Gi", "nvidia.com/gpu": "1"}']
 #    train_data_url: str [Default: 'https://drive.google.com/uc?id=1YHU91AS53lIqoSF8NUXxZV-Rnd2vHH_6']
-#    training_code_url: str [Default: 'https://github.com/questcollector/llmops-manifests/raw/second/script/sft-train.py']
+#    training_code_url: str [Default: 'https://github.com/questcollector/llmops-manifests/raw/main/script/sft-train.py']
 #    worker_replica: int [Default: 1.0]
-#    worker_resources: str [Default: '{"cpu":"2", "memory": "20Gi", "nvidia.com/gpu": "1"}']
 components:
   comp-createpvc:
     executorLabel: exec-createpvc
@@ -135,18 +135,18 @@ components:
           parameterType: STRING
         job_name:
           parameterType: STRING
+        limits_resources:
+          parameterType: STRING
         master_replica:
           parameterType: NUMBER_INTEGER
-        master_resources:
-          parameterType: STRING
         mount_path:
           parameterType: STRING
         pvc_name:
           parameterType: STRING
+        requests_resources:
+          parameterType: STRING
         worker_replica:
           parameterType: NUMBER_INTEGER
-        worker_resources:
-          parameterType: STRING
     outputDefinitions:
       parameters:
         Output:
@@ -230,7 +230,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
           $0\" \"$@\"\n"
         - sh
@@ -281,7 +281,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
           \  python3 -m pip install --quiet --no-warn-script-location 'requests' &&\
           \ \"$0\" \"$@\"\n"
@@ -322,7 +322,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
           \  python3 -m pip install --quiet --no-warn-script-location 'kubeflow-training'\
           \ && \"$0\" \"$@\"\n"
@@ -339,25 +339,22 @@ deploymentSpec:
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef run_pytorchjob(\n    job_name:str,\n    job_id:str,\n    base_image:str,\n\
           \    pvc_name:str,\n    mount_path:str,\n    exec_script:str,\n    master_replica:int,\n\
-          \    master_resources:str,\n    worker_replica:int,\n    worker_resources:str,\n\
+          \    worker_replica:int,\n    requests_resources:str,\n    limits_resources:str,\n\
           ) -> str:\n    import json\n    from kubernetes import client\n    from\
           \ kubeflow.training.constants import constants\n    from kubeflow.training\
-          \ import models\n\n    # parse node resources\n    master_resources = json.loads(master_resources)\n\
-          \    worker_resources = json.loads(worker_resources)\n\n    print(f\"master\
-          \ node resources:\\n{json.dumps(master_resources, indent=4)}\")\n    print(f\"\
-          worker node resources:\\n{json.dumps(worker_resources, indent=4)}\")\n\n\
-          \    # populate nproc_per_node argument\n    master_exec_script = exec_script.replace(\"\
-          <<gpu_cnt>>\", master_resources[\"nvidia.com/gpu\"])\n    worker_exec_script\
-          \ = exec_script.replace(\"<<gpu_cnt>>\", worker_resources[\"nvidia.com/gpu\"\
-          ])\n\n    ## declare training pod spec    \n    pod_template_spec = client.V1PodTemplateSpec(\n\
+          \ import models\n\n    # parse node resources\n    requests_resources =\
+          \ json.loads(requests_resources)\n    limits_resources = json.loads(limits_resources)\n\
+          \n    # populate nproc_per_node argument\n    exec_script = exec_script.replace(\"\
+          <<gpu_cnt>>\", requests_resources[\"nvidia.com/gpu\"])\n\n    ## declare\
+          \ training pod spec    \n    pod_template_spec = client.V1PodTemplateSpec(\n\
           \        metadata=client.V1ObjectMeta(annotations={constants.ISTIO_SIDECAR_INJECTION:\
           \ \"false\"}), ## istio sidecar disable\n        spec=client.V1PodSpec(\n\
           \            restart_policy=\"Never\",\n            containers=[\n     \
           \           client.V1Container(\n                    name=constants.PYTORCHJOB_CONTAINER,\n\
           \                    image=base_image,\n                    command=[\"\
-          bash\", \"-c\"],\n                    args=[master_exec_script],\n     \
-          \               resources=client.V1ResourceRequirements(\n             \
-          \           limits=master_resources,\n                        requests=master_resources\n\
+          bash\", \"-c\"],\n                    args=[exec_script],\n            \
+          \        resources=client.V1ResourceRequirements(\n                    \
+          \    limits=limits_resources,\n                        requests=requests_resources\n\
           \                    ),\n                    env=[ ## for mlflow artifact\
           \ store\n                        client.V1EnvVar(\n                    \
           \        name=\"AWS_ACCESS_KEY_ID\",\n                            value_from=client.V1EnvVarSource(\n\
@@ -395,13 +392,9 @@ deploymentSpec:
           \            run_policy=models.KubeflowOrgV1RunPolicy(clean_pod_policy=None),\n\
           \            pytorch_replica_specs={}\n        )\n    )\n    pytorchjob.spec.pytorch_replica_specs[constants.REPLICA_TYPE_MASTER]\
           \ = models.KubeflowOrgV1ReplicaSpec(replicas=master_replica, template=pod_template_spec)\n\
-          \n    import copy\n    worker_pod_template_spec = copy.deepcopy(pod_template_spec)\n\
-          \    worker_pod_template_spec.spec.containers[0].args = [worker_exec_script]\n\
-          \    worker_pod_template_spec.spec.containers[0].resources = client.V1ResourceRequirements(\n\
-          \        limits=worker_resources,\n        requests=worker_resources,\n\
-          \    )\n    pytorchjob.spec.pytorch_replica_specs[constants.REPLICA_TYPE_WORKER]\
-          \ = models.KubeflowOrgV1ReplicaSpec(replicas=worker_replica, template=worker_pod_template_spec)\n\
-          \n\n    ## create pytorchjob\n    from kubeflow.training import TrainingClient\n\
+          \    pytorchjob.spec.pytorch_replica_specs[constants.REPLICA_TYPE_WORKER]\
+          \ = models.KubeflowOrgV1ReplicaSpec(replicas=worker_replica, template=pod_template_spec)\n\
+          \n    ## create pytorchjob\n    from kubeflow.training import TrainingClient\n\
           \    training_client = TrainingClient()\n    training_client.create_job(pytorchjob,\
           \ namespace=namespace)\n\n    ## wait till Running state\n    running_pytorchjob\
           \ = training_client.wait_for_job_conditions(\n        name=pytorchjob.metadata.name,\n\
@@ -413,7 +406,9 @@ deploymentSpec:
           \ is succeeded\n    training_client.wait_for_job_conditions(\n        name=running_pytorchjob.metadata.name,\n\
           \        namespace=running_pytorchjob.metadata.namespace,\n        job_kind=constants.PYTORCHJOB_KIND,\n\
           \        expected_conditions={constants.JOB_CONDITION_SUCCEEDED}\n    )\n\
-          \    return pytorchjob_name\n\n"
+          \n    ## delete job\n    training_client.delete_job(\n        name=running_pytorchjob.metadata.name,\n\
+          \        namespace=running_pytorchjob.metadata.namespace,\n        job_kind=constants.PYTORCHJOB_KIND,\n\
+          \    )\n\n    return pytorchjob_name\n\n"
         image: python:3.11
     exec-save-jsonl:
       container:
@@ -427,7 +422,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
           \  python3 -m pip install --quiet --no-warn-script-location 'datasets' &&\
           \ \"$0\" \"$@\"\n"
@@ -464,7 +459,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
           \  python3 -m pip install --quiet --no-warn-script-location 'datasets' &&\
           \ \"$0\" \"$@\"\n"
@@ -501,7 +496,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
           \  python3 -m pip install --quiet --no-warn-script-location 'requests' &&\
           \ \"$0\" \"$@\"\n"
@@ -533,7 +528,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
           \  python3 -m pip install --quiet --no-warn-script-location 'datasets' &&\
           \ \"$0\" \"$@\"\n"
@@ -579,7 +574,7 @@ deploymentSpec:
         - -c
         - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0'\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
           \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
           \  python3 -m pip install --quiet --no-warn-script-location 'datasets' &&\
           \ \"$0\" \"$@\"\n"
@@ -718,10 +713,10 @@ root:
                 producerTask: generate-pytorchjob-script
             job_name:
               componentInputParameter: job_name
+            limits_resources:
+              componentInputParameter: limits_resources
             master_replica:
               componentInputParameter: master_replica
-            master_resources:
-              componentInputParameter: master_resources
             mount_path:
               runtimeValue:
                 constant: /train
@@ -729,10 +724,10 @@ root:
               taskOutputParameter:
                 outputParameterKey: name
                 producerTask: createpvc
+            requests_resources:
+              componentInputParameter: requests_resources
             worker_replica:
               componentInputParameter: worker_replica
-            worker_resources:
-              componentInputParameter: worker_resources
         taskInfo:
           name: run-pytorchjob
       save-jsonl:
@@ -801,7 +796,7 @@ root:
   inputDefinitions:
     parameters:
       base_image:
-        defaultValue: asia-northeast3-docker.pkg.dev/silver-bridge-433413-f3/llmops/transformers-pytorch-deepspeed-latest-gpu:deepspeed-v0.15.0-24.06.py3
+        defaultValue: asia-northeast3-docker.pkg.dev/tokyo-data-452811-t2/llmops/transformers-deepspeed:v4.49.0-v0.16.4-24.06
         description: base image for pytorchjob.
         isOptional: true
         parameterType: STRING
@@ -816,7 +811,7 @@ root:
         isOptional: true
         parameterType: STRING
       deepspeed_config_url:
-        defaultValue: https://github.com/questcollector/llmops-manifests/raw/second/script/deepspeed.json
+        defaultValue: https://github.com/questcollector/llmops-manifests/raw/main/script/deepspeed.json
         description: url of deepspeed config in json format.
         isOptional: true
         parameterType: STRING
@@ -830,16 +825,16 @@ root:
         description: prefix of pytorchjob/output model
         isOptional: true
         parameterType: STRING
+      limits_resources:
+        defaultValue: '{"cpu":"4", "memory": "55Gi", "nvidia.com/gpu": "1"}'
+        description: training job resource limits in json format
+        isOptional: true
+        parameterType: STRING
       master_replica:
         defaultValue: 1.0
         description: replica size for pytorchjob master nodes
         isOptional: true
         parameterType: NUMBER_INTEGER
-      master_resources:
-        defaultValue: '{"cpu":"2", "memory": "55Gi", "nvidia.com/gpu": "1"}'
-        description: master node resource spec in json format
-        isOptional: true
-        parameterType: STRING
       model_id:
         defaultValue: unsloth/Meta-Llama-3.1-8B-Instruct
         description: pretrained model for finetuning.
@@ -850,13 +845,18 @@ root:
         description: number of training epochs as training argument.
         isOptional: true
         parameterType: NUMBER_INTEGER
+      requests_resources:
+        defaultValue: '{"cpu":"2", "memory": "20Gi", "nvidia.com/gpu": "1"}'
+        description: training job resource requests in json format
+        isOptional: true
+        parameterType: STRING
       train_data_url:
         defaultValue: https://drive.google.com/uc?id=1YHU91AS53lIqoSF8NUXxZV-Rnd2vHH_6
         description: url of train dataset in jsonl file.
         isOptional: true
         parameterType: STRING
       training_code_url:
-        defaultValue: https://github.com/questcollector/llmops-manifests/raw/second/script/sft-train.py
+        defaultValue: https://github.com/questcollector/llmops-manifests/raw/main/script/sft-train.py
         description: url of training code.
         isOptional: true
         parameterType: STRING
@@ -865,10 +865,5 @@ root:
         description: replica size for pytorchjob worker nodes
         isOptional: true
         parameterType: NUMBER_INTEGER
-      worker_resources:
-        defaultValue: '{"cpu":"2", "memory": "20Gi", "nvidia.com/gpu": "1"}'
-        description: worker node resource spec in json format
-        isOptional: true
-        parameterType: STRING
 schemaVersion: 2.1.0
-sdkVersion: kfp-2.9.0
+sdkVersion: kfp-2.7.0
