@@ -1,13 +1,13 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: metric-vs
+  name: {{ include "metric.fullname" . }}-vs
   namespace: {{ .Release.Namespace }}
 spec:
   hosts:
   - "*"
   gateways:
-  - metric-gateway
+  - {{ include "metric.fullname" . }}-gateway
   http:
   - name: grafana
     match:
@@ -19,7 +19,7 @@ spec:
         prefix: /grafana/
     route:
     - destination:
-        host: {{ include "metric.name" . }}-grafana.{{ .Release.Namespace }}.svc.cluster.local
+        host: {{ .Values.grafana.fullnameOverride }}.{{ .Release.Namespace }}.svc.cluster.local
         port:
           number: 80
   - name: prometheus
@@ -32,6 +32,21 @@ spec:
       uri: "/"
     route:
     - destination:
-        host: {{ include "metric.name" . }}-prometheus-server.{{ .Release.Namespace }}.svc.cluster.local
+        host: {{ .Values.prometheus.server.fullnameOverride }}.{{ .Release.Namespace }}.svc.cluster.local
         port:
           number: 80
+  - name: jaeger
+    match:
+    - uri:
+        exact: /jaeger
+    - uri:
+        prefix: /jaeger/
+    - uri:
+        prefix: /js
+    - uri:
+        prefix: /static
+    route:
+    - destination:
+        host: {{ .Values.jaeger.fullnameOverride }}-query.{{ .Release.Namespace }}.svc.cluster.local
+        port:
+          number: 16686
