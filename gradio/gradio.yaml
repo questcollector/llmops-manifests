@@ -23,7 +23,7 @@ spec:
     - name: INFERENCE_SERVICE
       value: http://luckyvicky.admin-profile.svc.cluster.local
     - name: MODEL_NAME
-      value: unsloth/Meta-Llama-3.1-8B-Instruct
+      value: luckyvicky
     - name: SYSTEM_PROMPT
       valueFrom:
         configMapKeyRef:
