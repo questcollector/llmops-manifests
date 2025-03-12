@@ -47,9 +47,9 @@ class ScriptArguments:
     mount_path: Optional[str] = field(default="/train", metadata={"help": "mount path for PVC"})
 
     # LoraConfig
-    lora_alpha: Optional[float] = field(default=16, metadata={"help": "the lora alpha parameter"})
+    lora_alpha: Optional[float] = field(default=8, metadata={"help": "the lora alpha parameter"})
     lora_dropout: Optional[float] = field(default=0.05, metadata={"help": "the lora dropout parameter"})
-    lora_r: Optional[int] = field(default=32, metadata={"help": "the lora r parameter"})
+    lora_r: Optional[int] = field(default=16, metadata={"help": "the lora r parameter"})
 
 parser = HfArgumentParser((ScriptArguments))
 script_args = parser.parse_args_into_dataclasses()[0]
@@ -71,7 +71,7 @@ training_args = SFTConfig(
     log_level="info",
     report_to=["tensorboard","mlflow"],
     warmup_ratio=0.1,
-    learning_rate=2e-4,
+    learning_rate=1e-4,
     lr_scheduler_type="cosine",
     bf16=True,
     gradient_checkpointing=True,

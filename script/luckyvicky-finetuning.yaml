@@ -5,7 +5,7 @@
 #    base_image: str [Default: 'asia-northeast3-docker.pkg.dev/tokyo-data-452811-t2/llmops/transformers-deepspeed:v4.49.0-v0.16.4-24.06']
 #    batch_size: int [Default: 4.0]
 #    deepspeed_config_extras: str [Default: '{}']
-#    deepspeed_config_url: str [Default: 'https://github.com/questcollector/llmops-manifests/raw/main/script/deepspeed.json']
+#    deepspeed_config_url: str [Default: 'https://github.com/questcollector/llmops-manifests/raw/refs/heads/main/script/deepspeed.json']
 #    eval_data_url: str [Default: 'https://drive.google.com/uc?id=1loRPD53t6K0kdMRa6lv7qRO5rzDLanRR']
 #    job_name: str [Default: 'luckyvicky']
 #    limits_resources: str [Default: '{"cpu":"4", "memory": "55Gi", "nvidia.com/gpu": "1"}']
@@ -14,7 +14,7 @@
 #    num_train_epochs: int [Default: 10.0]
 #    requests_resources: str [Default: '{"cpu":"2", "memory": "20Gi", "nvidia.com/gpu": "1"}']
 #    train_data_url: str [Default: 'https://drive.google.com/uc?id=1YHU91AS53lIqoSF8NUXxZV-Rnd2vHH_6']
-#    training_code_url: str [Default: 'https://github.com/questcollector/llmops-manifests/raw/main/script/sft-train.py']
+#    training_code_url: str [Default: 'https://github.com/questcollector/llmops-manifests/raw/refs/heads/main/script/sft-train.py']
 #    worker_replica: int [Default: 1.0]
 components:
   comp-createpvc:
@@ -811,7 +811,7 @@ root:
         isOptional: true
         parameterType: STRING
       deepspeed_config_url:
-        defaultValue: https://github.com/questcollector/llmops-manifests/raw/main/script/deepspeed.json
+        defaultValue: https://github.com/questcollector/llmops-manifests/raw/refs/heads/main/script/deepspeed.json
         description: url of deepspeed config in json format.
         isOptional: true
         parameterType: STRING
@@ -856,7 +856,7 @@ root:
         isOptional: true
         parameterType: STRING
       training_code_url:
-        defaultValue: https://github.com/questcollector/llmops-manifests/raw/main/script/sft-train.py
+        defaultValue: https://github.com/questcollector/llmops-manifests/raw/refs/heads/main/script/sft-train.py
         description: url of training code.
         isOptional: true
         parameterType: STRING
