@@ -4,6 +4,7 @@ from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
     HfArgumentParser,
+    TrainerCallback
 )
 from trl import (
     SFTTrainer,
@@ -128,7 +129,16 @@ train_dataset = download_object_and_convert_to_dataset(minio_client, script_args
 eval_dataset = download_object_and_convert_to_dataset(minio_client, script_args.eval_dataset_uri)
 
 # start memory snapshot
-torch.cuda.memory._record_memory_history()
+class MemorySnapshotCallback(TrainerCallback):
+    def on_train_begin(self, args, state, control, **kwargs):
+        print("**CUDA Memory Snapshot started**")
+        torch.cuda.memory._record_memory_history()
+    def on_step_end(self, args, state, control, **kwargs):
+        if state.global_step == 1:
+            torch.cuda.memory._dump_snapshot(f"{output_dir}/memory_snapshot_rank{dist.get_rank()}.pickle")
+            print("**CUDA Memory Snapshot saved**")
+            torch.cuda.memory._record_memory_history(enabled=None)
+            print("**CUDA Memory Snapshot ended**")
 
 # get tokenizer and model
 tokenizer = AutoTokenizer.from_pretrained(script_args.model_path, trust_remote_code=True)
@@ -151,6 +161,7 @@ trainer = SFTTrainer(
     eval_dataset=eval_dataset,
     peft_config=peft_config,
     compute_metrics=compute_metrics,
+    callbacks=[MemorySnapshotCallback]
 )
 
 ## mlflow config
@@ -173,9 +184,6 @@ if dist.get_rank() == 0:
 trainer.model.print_trainable_parameters()
 trainer.train()
 
-# dump memory snapshot
-torch.cuda.memory._dump_snapshot(f"{script_args.mount_path}/memory_snapshot_rank{dist.get_rank()}.pickle")
-torch.cuda.memory._record_memory_history(enabled=None)
 
 trainer.save_model()
 
