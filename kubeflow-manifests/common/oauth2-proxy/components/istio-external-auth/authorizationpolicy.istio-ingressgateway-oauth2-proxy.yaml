@@ -23,6 +23,3 @@ spec:
         - /dex/*
         - /dex/**
         - /oauth2/*
-        notHosts:
-        - luckyvicky.admin-profile.<<domain>>
-        - luckyvicky.admin-profile.<<domain>>:*

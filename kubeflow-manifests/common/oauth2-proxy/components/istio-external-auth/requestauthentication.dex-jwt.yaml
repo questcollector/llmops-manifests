@@ -16,8 +16,8 @@ spec:
       app: istio-ingressgateway
 
   jwtRules:
-  - issuer: https://kubeflow.<<domain>>/dex
-    jwksUri: https://kubeflow.<<domain>>/dex/keys
+  - issuer: http://dex.auth.svc.cluster.local:5556/dex
+
     # `forwardOriginalToken` is not strictly required to be true.
     # there are pros and cons to each value:
     #  - true: the original token is forwarded to the destination service
