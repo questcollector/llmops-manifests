@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-pipeline-ui
+spec:
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-ui
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: ml-pipeline-ui-configmap

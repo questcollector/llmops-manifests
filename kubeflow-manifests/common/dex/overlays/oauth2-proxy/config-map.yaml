@@ -4,7 +4,7 @@ metadata:
   name: dex
 data:
   config.yaml: |
-    issuer: http://dex.auth.svc.cluster.local:5556/dex
+    issuer: https://kubeflow.llmops-course.com/dex
     storage:
       type: kubernetes
       config:
@@ -17,14 +17,31 @@ data:
     oauth2:
       skipApprovalScreen: true
     enablePasswordDB: true
-    staticPasswords:
-    - email: user@example.com
-      hashFromEnv: DEX_USER_PASSWORD
-      username: user
-      userID: "15841185641784"
+    # staticPasswords:
+    # - email: user@example.com
+    #   hashFromEnv: DEX_USER_PASSWORD
+    #   username: user
+    #   userID: "15841185641784"
     staticClients:
     # https://github.com/dexidp/dex/pull/1664
     - idEnv: OIDC_CLIENT_ID
       redirectURIs: ["/oauth2/callback"]
       name: 'Dex Login Application'
       secretEnv: OIDC_CLIENT_SECRET
+    connectors:
+    - type: oidc
+      id: keycloak
+      name: keycloak
+      config:
+        issuer: https://kubeflow.llmops-course.com/auth/realms/kubeflow
+        clientID: kubeflow-oidc-authservice
+        clientSecret: VYi9MxmR62VS4Lyp7xuqYdgGTJYdYSoO
+        redirectURI: https://kubeflow.llmops-course.com/dex/callback
+        insecure: false
+        insecureSkipEmailVerified: true
+        userNameKey: email       
+        scopes:
+          - openid
+          - profile
+          - email
+          - offline_access

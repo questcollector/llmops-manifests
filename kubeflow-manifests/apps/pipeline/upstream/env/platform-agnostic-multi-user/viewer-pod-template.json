@@ -1,0 +1,19 @@
+{
+  "spec": {
+    "containers": [
+      {
+        "env": [
+          {
+            "name": "AWS_REGION",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "pipeline-install-config",
+                "key": "minioServiceRegion"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

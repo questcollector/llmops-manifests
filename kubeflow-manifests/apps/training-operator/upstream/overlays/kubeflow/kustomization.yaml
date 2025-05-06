@@ -13,3 +13,6 @@ secretGenerator:
   - name: training-operator-webhook-cert
     options:
       disableNameSuffixHash: true
+
+patchesStrategicMerge:
+  - deployment.yaml

@@ -94,6 +94,9 @@ resources:
 - ../apps/kserve/kserve
 - ../apps/kserve/models-web-app/overlays/kubeflow
 
+# Model Registry
+- ../apps/model-registry/upstream/overlays/external-db
+
 # Ray is an experimental integration
 # Here is the documentation for Ray: https://docs.ray.io/en/latest/
 # Here is the internal documentation for Ray: - ../experimental/ray/README.md

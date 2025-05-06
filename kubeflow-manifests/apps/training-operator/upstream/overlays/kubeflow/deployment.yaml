@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: training-operator
+spec:
+  template:
+    spec:
+      containers:
+        - name: training-operator
+          args:
+          - -pytorch-init-container-max-tries=1000
