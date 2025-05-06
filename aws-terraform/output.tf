@@ -1,6 +1,11 @@
 output "rds_endpoint" {
   description = "rds endpoint"
-  value       = aws_db_instance.mysql.endpoint
+  value       = aws_db_instance.mysql.address
+}
+
+output "rds_port" {
+  description = "rds port"
+  value       = aws_db_instance.mysql.port
 }
 
 output "rds_username" {
