@@ -8,11 +8,11 @@ resources:
 patchesStrategicMerge:
 - patches/model-registry-deployment.yaml
 
-vars:
-- name: MYSQL_PORT
-  objref:
-    kind: ConfigMap
-    name: pipeline-install-config
-    apiVersion: v1
-  fieldref:
-    fieldpath: data.dbPort
+# vars:
+# - name: MYSQL_PORT
+#   objref:
+#     kind: ConfigMap
+#     name: pipeline-install-config
+#     apiVersion: v1
+#   fieldref:
+#     fieldpath: data.dbPort

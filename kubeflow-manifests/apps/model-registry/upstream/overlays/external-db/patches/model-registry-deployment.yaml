@@ -7,7 +7,7 @@ spec:
     metadata:
       annotations:
         # db doesn't use istio
-        traffic.sidecar.istio.io/excludeOutboundPorts: $(MYSQL_PORT)
+        # traffic.sidecar.istio.io/excludeOutboundPorts: $(MYSQL_PORT)
     spec:
       containers:
         - name: rest-container
@@ -23,9 +23,6 @@ spec:
             - --mlmd-hostname=localhost
             - --mlmd-port=$(MODEL_REGISTRY_GRPC_SERVICE_PORT)
         - name: grpc-container
-          # Remove existing environment variables
-          env:
-          - $patch: replace
           envFrom:
           - configMapRef:
               name: model-registry-configmap

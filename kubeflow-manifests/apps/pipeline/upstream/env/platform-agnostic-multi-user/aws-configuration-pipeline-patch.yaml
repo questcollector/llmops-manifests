@@ -28,5 +28,5 @@ spec:
                   name: pipeline-install-config
                   key: minioServiceRegion
             - name: OBJECTSTORECONFIG_PORT
-              value: ""
+              value: "443"
           name: ml-pipeline-api-server
