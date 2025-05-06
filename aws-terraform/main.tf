@@ -111,6 +111,16 @@ module "eks" {
   }
 }
 
+resource "aws_security_group_rule" "istio" {
+  description              = "Istio"
+  type                     = "ingress"
+  from_port                = 15017
+  to_port                  = 15017
+  protocol                 = "tcp"
+  source_security_group_id = module.eks.cluster_security_group_id
+  security_group_id        = module.eks.node_security_group_id
+}
+
 data "aws_iam_policy" "ebs_csi_policy" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
@@ -162,6 +172,59 @@ resource "aws_eks_addon" "s3-csi" {
     "terraform" = "true"
   }
 }
+
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["pods.eks.amazonaws.com"]
+    }
+
+    actions = [
+      "sts:AssumeRole",
+      "sts:TagSession"
+    ]
+  }
+}
+resource "aws_iam_role" "s3_full_access" {
+  name               = "eks-pod-identity-s3-full-access"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "s3_role_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  role       = aws_iam_role.s3_full_access.name
+}
+
+resource "aws_eks_pod_identity_association" "ml_pipeline" {
+  cluster_name    = module.eks.cluster_name
+  namespace       = "kubeflow"
+  service_account = "ml-pipeline"
+  role_arn        = aws_iam_role.s3_full_access.arn
+}
+
+resource "aws_eks_pod_identity_association" "ml_pipeline_ui" {
+  cluster_name    = module.eks.cluster_name
+  namespace       = "kubeflow"
+  service_account = "ml-pipeline-ui"
+  role_arn        = aws_iam_role.s3_full_access.arn
+}
+resource "aws_eks_pod_identity_association" "default_editor" {
+  cluster_name    = module.eks.cluster_name
+  namespace       = "pjt-llmops"
+  service_account = "default-editor"
+  role_arn        = aws_iam_role.s3_full_access.arn
+}
+
+resource "aws_eks_pod_identity_association" "mlflow" {
+  cluster_name    = module.eks.cluster_name
+  namespace       = "mlflow"
+  service_account = "mlflow"
+  role_arn        = aws_iam_role.s3_full_access.arn
+}
+
 
 ## RDS
 resource "random_string" "password" {
