@@ -9,9 +9,8 @@ resources:
   - ../../third-party/argo/installs/cluster
   # - ../../third-party/mysql/base
   # - ../../third-party/mysql/options/istio
-  - ../../third-party/minio/base
-  - ../../third-party/minio/options/istio
-  - minio-vs.yaml
+  # - ../../third-party/minio/base
+  # - ../../third-party/minio/options/istio
 
 # Identifier for application manager to apply ownerReference.
 # The ownerReference ensures the resources get garbage collected
@@ -25,14 +24,27 @@ namespace: kubeflow
 
 patchesStrategicMerge:
   - cache-server.yaml
+  - pipeline-install-config.yaml
+patches:
+  - path: aws-configuration-pipeline-patch.yaml
+  - path: aws-configuration-pipeline-ui-patch.yaml
 
 # Used by Kustomize
 configMapGenerator:
-  - name: pipeline-install-config
-    env: params.env
-    behavior: merge
-
+  - name: workflow-controller-configmap
+    behavior: replace
+    files:
+      - config
+  - name: ml-pipeline-ui-configmap
+    behavior: replace
+    files:
+      - viewer-pod-template.json
 secretGenerator:
   - name: mysql-secret
-    env: params-db-secret.env
+    env: secret.env
     behavior: merge
+  - name: mlpipeline-minio-artifact
+    env: minio-artifact-secret-patch.env
+    behavior: merge
+generatorOptions:
+  disableNameSuffixHash: true

@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
 - ../../base
-- gateway.yaml
 
 # We want to Knative to use Istio's local Gateway and not the Ingress Gateway
 # See: https://github.com/kubeflow/manifests/issues/1966

@@ -16,5 +16,4 @@ metadata:
   name: config-domain
   namespace: knative-serving
 data:
-  <<domain>>: ""
   svc.cluster.local: ""

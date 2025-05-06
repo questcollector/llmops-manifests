@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipeline-install-config
+data:
+  dbHost: YOUR_RDS_ENDPOINT
+  mysqlHost: YOUR_RDS_ENDPOINT
+  dbPort: YOUR_RDS_PORT
+  mysqlPort: YOUR_RDS_PORT
+  bucketName: YOUR_S3_BUCKET_NAME
+  minioServiceHost: s3.amazonaws.com
+  minioServiceRegion: us-east-1
+  defaultPipelineRoot: s3://YOUR_S3_BUCKET_NAME/mlpipeline
+  providers: |-
+    s3:
+      default:
+        endpoint: s3.amazonaws.com
+        disableSSL: false
+        region: us-east-1
+        credentials:
+          fromEnv: false
+          secretRef:
+            secretName: mlpipeline-minio-artifact
+            accessKeyKey: accesskey
+            secretKeyKey: secretkey
