@@ -66,9 +66,12 @@ Create the name of the service account to use
 Create the name of the secret to use
 */}}
 {{- define "mlflow.secretName" -}}
-{{- if .Values.secret.create }}
 {{- default (include "mlflow.fullname" .) .Values.secret.name }}
-{{- else }}
-{{- default "default" .Values.secret.name }}
 {{- end }}
+
+{{/*
+Create the name of the secret to use
+*/}}
+{{- define "mlflow.configMapName" -}}
+{{- default (include "mlflow.fullname" .) .Values.configMap.name }}
 {{- end }}

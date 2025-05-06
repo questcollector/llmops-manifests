@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque
+stringData:
+  MYSQL_HOST: kubeflow.c24rqq6ventz.us-east-1.rds.amazonaws.com
+  MYSQL_TCP_PORT: "43256"
+  MYSQL_USER: admin
+  MYSQL_PWD: "fFJzxcYuso"
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-script
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS keycloak;
+    CREATE DATABASE IF NOT EXISTS katib;
+    CREATE DATABASE IF NOT EXISTS mlflow;
+    CREATE USER 'pipeline'@'%' IDENTIFIED BY 'pipeline';
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-client
+spec:
+  containers:
+    - name: mysql
+      image: mysql:8.0.41
+      command: ["/bin/sh", "-c"]
+      args: 
+        - |
+          echo "Creating DB if not exists..." &&
+          mysql -u "$MYSQL_USER" < /scripts/init.sql
+      envFrom:
+        - secretRef:
+            name: mysql-secret
+      volumeMounts:
+        - name: init-sql
+          mountPath: /scripts
+          readOnly: true
+  volumes:
+    - name: init-sql
+      configMap:
+        name: mysql-initdb-script
+        items:
+          - key: init.sql
+            path: init.sql
