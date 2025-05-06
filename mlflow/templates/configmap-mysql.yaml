@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mlflow.configMapName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mlflow.labels" . | nindent 4 }}
+  {{- with .Values.configMap.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  {{- range $key, $value := .Values.configMap.contents.backendStore }}
+  {{ $key }} : {{ $value }}
+  {{- end }}

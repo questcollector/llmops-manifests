@@ -8,38 +8,34 @@ mlflowPort: "8080"
 
 image:
   ## Artifact registry에 저장된 이미지
-  repository: miroirs/mlflow
+  repository: 718400571493.dkr.ecr.us-east-1.amazonaws.com/mlflow
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v2.13.0"
+  tag: "v2.22.0"
 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+artifactStore:
+  region: us-east-1
+  bucket: YOUR_S3_BUCKET_NAME
+
 secret:
   annotations: {}
   name: ""
-  minio:
-    accesskey: minio
-    secretkey: minio123
-  mysql:
-    ## terraform으로 생성한 유저와 패스워드를 입력합니다.
-    username: mlflow
-    password: mlflow
-
-minio:
-  # minio endpoint
-  endpoint: http://minio-service.kubeflow.svc.cluster.local:9000
-  # minio bucket, 없으면 자동으로 생성됩니다.
-  bucket: mlflow
-mysql:
-  create: false
-  ## <<gcsCloudSqlPrivateIP>>에는 terraform으로 생성한 cloudSQL의 IP를 입력합니다.
-  endpoint: "<<gcsCloudSqlPrivateIP>>"
-  port: "3306"
-  ## terraform으로 생성한 database 입력합니다.
-  db: mlflow
+  contents: 
+    backendStore:
+      DB_USER: admin
+      DB_PW: "YOUR_RDS_PASSWORD"
+configMap:
+  annotations: {}
+  name: ""
+  contents:
+    backendStore:
+      DB_HOST: YOUR_RDS_ENDPOINT
+      DB_PORT: "YOUR_RDS_PORT"
+      DB_NAME: mlfllow
 
 serviceAccount:
   # Specifies whether a service account should be created
