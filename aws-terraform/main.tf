@@ -198,19 +198,6 @@ resource "aws_iam_role_policy_attachment" "s3_role_attachment" {
   role       = aws_iam_role.s3_full_access.name
 }
 
-resource "aws_eks_pod_identity_association" "ml_pipeline" {
-  cluster_name    = module.eks.cluster_name
-  namespace       = "kubeflow"
-  service_account = "ml-pipeline"
-  role_arn        = aws_iam_role.s3_full_access.arn
-}
-
-resource "aws_eks_pod_identity_association" "ml_pipeline_ui" {
-  cluster_name    = module.eks.cluster_name
-  namespace       = "kubeflow"
-  service_account = "ml-pipeline-ui"
-  role_arn        = aws_iam_role.s3_full_access.arn
-}
 resource "aws_eks_pod_identity_association" "default_editor" {
   cluster_name    = module.eks.cluster_name
   namespace       = "pjt-llmops"
