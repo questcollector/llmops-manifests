@@ -321,10 +321,10 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "VYi9MxmR62VS4Lyp7xuqYdgGTJYdYSoO",
       "redirectUris": [
-        "https://kubeflow.llmops-course.com/dex/callback"
+        "https://kubeflow.llmops-course.com/oauth2/callback"
       ],
       "webOrigins": [
-        "*"
+        "https://kubeflow.llmops-course.com"
       ],
       "notBefore": 0,
       "bearerOnly": false,
