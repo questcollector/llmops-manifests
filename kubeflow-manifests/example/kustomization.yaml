@@ -39,7 +39,7 @@ resources:
 # Istio
 - ../common/istio-1-24/istio-crds/base
 - ../common/istio-1-24/istio-namespace/base
-- ../common/istio-1-24/istio-install/overlays/oauth2-proxy
+- ../common/istio-1-24/istio-install/overlays/ingress
 # oauth2-proxy
 # NOTE: only uncomment ONE of the following overlays, depending on your cluster type
 # - ../common/oauth2-proxy/overlays/m2m-dex-only     # for all clusters
@@ -93,9 +93,6 @@ resources:
 # KServe
 - ../apps/kserve/kserve
 - ../apps/kserve/models-web-app/overlays/kubeflow
-
-# Model Registry
-- ../apps/model-registry/upstream/overlays/external-db
 
 # Ray is an experimental integration
 # Here is the documentation for Ray: https://docs.ray.io/en/latest/
