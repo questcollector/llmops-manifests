@@ -4,10 +4,10 @@ metadata:
   name: mysql-secret
 type: Opaque
 stringData:
-  MYSQL_HOST: kubeflow.c24rqq6ventz.us-east-1.rds.amazonaws.com
-  MYSQL_TCP_PORT: "43256"
+  MYSQL_HOST: YOUR_RDS_ENDPOINT
+  MYSQL_TCP_PORT: "YOUR_RDS_PORT"
   MYSQL_USER: admin
-  MYSQL_PWD: "fFJzxcYuso"
+  MYSQL_PWD: "YOUR_RDS_PASSWORD"
 
 ---
 
@@ -18,10 +18,20 @@ metadata:
 data:
   init.sql: |
     CREATE DATABASE IF NOT EXISTS keycloak;
+    CREATE USER IF NOT EXISTS 'keycloak'@'%' IDENTIFIED BY 'keycloak';
+    GRANT ALL ON keycloak.* TO 'keycloak'@'%';
     CREATE DATABASE IF NOT EXISTS katib;
+    CREATE USER IF NOT EXISTS 'katib'@'%' IDENTIFIED BY 'katib';
+    GRANT ALL ON katib.* TO 'katib'@'%';
     CREATE DATABASE IF NOT EXISTS mlflow;
-    CREATE USER 'pipeline'@'%' IDENTIFIED BY 'pipeline';
-
+    CREATE USER IF NOT EXISTS 'mlflow'@'%' IDENTIFIED BY 'mlflow';
+    GRANT ALL ON mlflow.* TO 'mlflow'@'%';
+    CREATE USER IF NOT EXISTS 'pipeline'@'%' IDENTIFIED BY 'pipeline';
+    CREATE DATABASE IF NOT EXISTS metadb;
+    CREATE DATABASE IF NOT EXISTS cachedb;
+    CREATE DATABASE IF NOT EXISTS mlpipeline;
+    GRANT ALL ON metadb.* TO 'pipeline'@'%';
+    FLUSH PRIVILEGES;
 ---
 
 apiVersion: v1

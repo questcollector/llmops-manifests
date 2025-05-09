@@ -1,0 +1,39 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+  name: ebs-sc
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+
+# ---
+
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: ebs-pvc
+# spec:
+#   accessModes:
+#     - ReadWriteOnce # Supported options: ReadWriteMany / ReadOnlyMany
+#   resources:
+#     requests:
+#       storage: 1Gi # Ignored, required
+# ---
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   name: ebs-app
+# spec:
+#   containers:
+#     - name: app
+#       image: ubuntu
+#       command: ["/bin/sh"]
+#       args: ["-c", "sleep infinity"]
+#       volumeMounts:
+#         - name: persistent-storage
+#           mountPath: /data
+#   volumes:
+#     - name: persistent-storage
+#       persistentVolumeClaim:
+#         claimName: ebs-pvc
