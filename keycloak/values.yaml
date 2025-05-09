@@ -1368,9 +1368,9 @@ postgresql:
 externalDatabase:
   host: YOUR_RDS_ENDPOINT
   port: YOUR_RDS_PORT
-  user: admin
+  user: keycloak
   database: keycloak
-  password: "YOUR_RDS_PASSWORD"
+  password: "keycloak"
   existingSecret: ""
   existingSecretHostKey: ""
   existingSecretPortKey: ""
