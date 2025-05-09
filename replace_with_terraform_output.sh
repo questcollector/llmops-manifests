@@ -5,10 +5,8 @@ RDS_ENDPOINT=$(cd aws-terraform && terraform output -raw rds_endpoint)
 RDS_PORT=$(cd aws-terraform && terraform output -raw rds_port)
 S3_BUCKET=$(cd aws-terraform && terraform output -raw s3_bucket)
 RDS_PASSWORD=$(cd aws-terraform && terraform output -raw rds_password)
-
-# ⌨️ Access key, secret access key 입력
-read -p "Enter aws_access_key_id: " AWS_ACCESS_KEY_ID
-read -p -s "Enter aws_access_key_id: " AWS_SECRET_ACCESS_KEY
+AWS_ACCESS_KEY_ID=$(cd aws-terraform && terraform output -raw access_key_id)
+AWS_SECRET_ACCESS_KEY=$(cd aws-terraform && terraform output -raw secret_access_key)
 
 # 🔍 치환 함수
 replace_placeholders() {
@@ -32,7 +30,6 @@ replace_placeholders() {
 for file in \
   kubeflow-manifests/apps/katib/upstream/installs/katib-cert-manager-external-db/secrets.env \
   kubeflow-manifests/apps/pipeline/upstream/env/platform-agnostic-multi-user/pipeline-install-config.yaml \
-  kubeflow-manifests/apps/pipeline/upstream/env/platform-agnostic-multi-user/secret.env \
   kubeflow-manifests/apps/pipeline/upstream/env/platform-agnostic-multi-user/minio-artifact-secret-patch.env \
   keycloak/values.yaml \
   mlflow/values.yaml \
