@@ -27,7 +27,7 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "mlflow.secretName" . }}
-            - confiaMapRef:
+            - configMapRef:
                 name: {{ include "mlflow.configMapName" . }}
           env:
             - name: AWS_DEFAULT_REGION
