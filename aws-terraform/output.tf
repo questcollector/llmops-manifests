@@ -34,3 +34,12 @@ output "cluster_name" {
   value       = module.eks.cluster_name
 }
 
+output "access_key_id" {
+  value     = aws_iam_access_key.temp_key.id
+  sensitive = true
+}
+
+output "secret_access_key" {
+  value     = aws_iam_access_key.temp_key.secret
+  sensitive = true
+}

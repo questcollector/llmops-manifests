@@ -282,3 +282,36 @@ resource "aws_s3_bucket" "kubeflow" {
     Environment = "Dev"
   }
 }
+
+# IAM user
+resource "aws_iam_policy" "s3_full_access_to_bucket" {
+  name        = "S3FullAccessToKubeflowBucket"
+  description = "Full access to the specific S3 bucket"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = "s3:*"
+        Resource = [
+          aws_s3_bucket.kubeflow.arn,
+          "${aws_s3_bucket.kubeflow.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_user" "s3_user" {
+  name = "s3-user"
+}
+
+resource "aws_iam_user_policy_attachment" "attach_policy" {
+  user       = aws_iam_user.s3_user.name
+  policy_arn = aws_iam_policy.s3_full_access_to_bucket.arn
+}
+
+
+resource "aws_iam_access_key" "temp_key" {
+  user = aws_iam_user.s3_user.name
+}
