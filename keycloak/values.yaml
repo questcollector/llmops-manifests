@@ -285,6 +285,10 @@ args: []
 ##     value: "bar"
 ##
 extraEnvVars:
+  - name: KC_PROXY_HEADERS
+    value: xforwarded
+  - name: KC_HOSTNAME
+    value: https://kubeflow.llmops-course.com/auth
   - name: KC_DB # override values from the conf file
     value: 'mysql'
   - name: KC_DB_URL
