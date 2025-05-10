@@ -125,7 +125,7 @@ data "aws_iam_policy" "ebs_csi_policy" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
 
-module "irsa-ebs-csi" {
+module "irsa_ebs_csi" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
   version = "5.54.0"
 
@@ -140,7 +140,7 @@ module "irsa-ebs-csi" {
 resource "aws_eks_addon" "ebs-csi" {
   cluster_name             = module.eks.cluster_name
   addon_name               = "aws-ebs-csi-driver"
-  service_account_role_arn = module.irsa-ebs-csi.iam_role_arn
+  service_account_role_arn = module.irsa_ebs_csi.iam_role_arn
   tags = {
     "eks_addon" = "ebs-csi"
     "terraform" = "true"
@@ -151,7 +151,7 @@ data "aws_iam_policy" "s3_csi_policy" {
   arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
-module "irsa-s3-csi" {
+module "irsa_s3_csi" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
   version = "5.54.0"
 
@@ -166,7 +166,7 @@ module "irsa-s3-csi" {
 resource "aws_eks_addon" "s3-csi" {
   cluster_name             = module.eks.cluster_name
   addon_name               = "aws-mountpoint-s3-csi-driver"
-  service_account_role_arn = module.irsa-s3-csi.iam_role_arn
+  service_account_role_arn = module.irsa_s3_csi.iam_role_arn
   tags = {
     "eks_addon" = "mountpoint-s3-csi"
     "terraform" = "true"
@@ -212,6 +212,29 @@ resource "aws_eks_pod_identity_association" "mlflow" {
   role_arn        = aws_iam_role.s3_full_access.arn
 }
 
+data "http" "alb_policy" {
+  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.12.0/docs/install/iam_policy.json"
+  request_headers = {
+    Accept = "application/json"
+  }
+}
+
+resource "aws_iam_policy" "alb_controller_policy" {
+  name   = "AWSLoadBalancerControllerIAMPolicy"
+  policy = data.http.alb_policy.response_body
+}
+
+module "irsa_alb_controller" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
+  version = "5.54.0"
+
+  create_role                    = true
+  role_name                      = "AWSLoadBalancerControllerRole-${module.eks.cluster_name}"
+  provider_url                   = module.eks.oidc_provider
+  role_policy_arns               = [aws_iam_policy.alb_controller_policy.arn]
+  oidc_fully_qualified_subjects  = ["system:serviceaccount:kube-system:aws-load-balancer-controller"]
+  oidc_fully_qualified_audiences = ["sts.amazonaws.com"]
+}
 
 ## RDS
 resource "random_string" "password" {

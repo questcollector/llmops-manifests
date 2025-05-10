@@ -43,3 +43,8 @@ output "secret_access_key" {
   value     = aws_iam_access_key.temp_key.secret
   sensitive = true
 }
+
+output "alb_controller_iam_role_arn" {
+  value     = module.irsa_alb_controller.iam_role_arn
+  sensitive = true
+}
