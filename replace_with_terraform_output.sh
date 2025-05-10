@@ -7,6 +7,7 @@ S3_BUCKET=$(cd aws-terraform && terraform output -raw s3_bucket)
 RDS_PASSWORD=$(cd aws-terraform && terraform output -raw rds_password)
 AWS_ACCESS_KEY_ID=$(cd aws-terraform && terraform output -raw access_key_id)
 AWS_SECRET_ACCESS_KEY=$(cd aws-terraform && terraform output -raw secret_access_key)
+ALB_CONTROLLER_IAM_ROLE_ARN=$(cd aws-terraform && terraform output -raw alb_controller_iam_role_arn)
 
 # 🔍 치환 함수
 replace_placeholders() {
@@ -20,6 +21,7 @@ replace_placeholders() {
     line=$(echo "$line" | sed "s|YOUR_RDS_PASSWORD|$RDS_PASSWORD|g")
     line=$(echo "$line" | sed "s|YOUR_AWS_ACCESS_ID|$AWS_ACCESS_KEY_ID|g")
     line=$(echo "$line" | sed "s|YOUR_AWS_SECRET_KEY|$AWS_SECRET_ACCESS_KEY|g")
+    line=$(echo "$line" | sed "s|YOUR_ROLE_ARN|$ALB_CONTROLLER_IAM_ROLE_ARN|g")
     printf "%s\n" "$line" >> "$tmpfile"
   done < "$infile"
 
@@ -31,6 +33,7 @@ for file in \
   kubeflow-manifests/apps/katib/upstream/installs/katib-cert-manager-external-db/secrets.env \
   kubeflow-manifests/apps/pipeline/upstream/env/platform-agnostic-multi-user/pipeline-install-config.yaml \
   kubeflow-manifests/apps/pipeline/upstream/env/platform-agnostic-multi-user/minio-artifact-secret-patch.env \
+  aws-load-balancer-controller/values.yaml \
   keycloak/values.yaml \
   mlflow/values.yaml \
   tests/mysql.yaml
