@@ -45,6 +45,6 @@ secretGenerator:
     behavior: merge
   - name: mlpipeline-minio-artifact
     env: minio-artifact-secret-patch.env
-    behavior: merge
+    # behavior: merge
 generatorOptions:
   disableNameSuffixHash: true
