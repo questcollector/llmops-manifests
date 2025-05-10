@@ -26,8 +26,8 @@ secret:
   name: ""
   contents: 
     backendStore:
-      DB_USER: admin
-      DB_PW: "YOUR_RDS_PASSWORD"
+      DB_USER: mlflow
+      DB_PW: "mlflow"
 configMap:
   annotations: {}
   name: ""
