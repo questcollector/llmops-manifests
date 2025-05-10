@@ -31,6 +31,8 @@ data:
     CREATE DATABASE IF NOT EXISTS cachedb;
     CREATE DATABASE IF NOT EXISTS mlpipeline;
     GRANT ALL ON metadb.* TO 'pipeline'@'%';
+    GRANT ALL ON cachedb.* TO 'pipeline'@'%';
+    GRANT ALL ON mlpipeline.* TO 'pipeline'@'%';
     FLUSH PRIVILEGES;
 ---
 
